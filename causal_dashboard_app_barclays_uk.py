@@ -1,4 +1,5 @@
 # causal_dashboard_app_barclays_uk.py
+# Final version with all enhancements and no chart omissions
 
 import streamlit as st
 import pandas as pd
@@ -41,7 +42,6 @@ if uploaded_file:
 
     # === Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
-    st.markdown("Historic cumulative revenue by channel. Filter below.")
     selected_channels = st.multiselect("Select Channels", channels, default=channels)
     selected_segments = st.multiselect("Select Segments", segments, default=segments)
     selected_products = st.multiselect("Select Products", products, default=products)
@@ -69,7 +69,6 @@ if uploaded_file:
 
     # === Total Revenue by Channel
     st.markdown("### 📊 Total Revenue by Channel")
-    st.markdown("Total revenue across all weeks by channel.")
     agg = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
     fig2, ax2 = plt.subplots(figsize=(10, 4))
     sns.barplot(data=agg, x="Channel", y="AttributedSales", ax=ax2)
@@ -80,24 +79,25 @@ if uploaded_file:
 
     # === Waterfall Chart
     st.markdown("### 📉 Revenue Drivers - Waterfall")
-    st.markdown("Channel-by-channel and macro impact on revenue. All values in £ millions.")
     channel_contrib = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0) / 1e6
     macro = {"Interest Rate": -0.15, "Competition": -0.2, "Segment Shift": 0.25}
     waterfall = [("Baseline", 1.0)] + list(channel_contrib.items()) + list(macro.items())
     total = sum(val for _, val in waterfall)
     waterfall.append(("Total", total))
     wf = pd.DataFrame(waterfall, columns=["Driver", "Value"])
-    fig3, ax3 = plt.subplots(figsize=(14, 4))
+    fig3, ax3 = plt.subplots(figsize=(16, 5))
     sns.barplot(data=wf, x="Driver", y="Value", palette="coolwarm", ax=ax3)
     ax3.set_ylabel("£ Value (millions)")
     ax3.set_title("Revenue Waterfall by Driver")
     ax3.ticklabel_format(style='plain', axis='y')
+    ax3.set_xticklabels(ax3.get_xticklabels(), rotation=45, ha="right")
     for p in ax3.patches:
         ax3.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig3)
 
     # === Competitor Summary
     st.markdown("### 📋 Competitor Impact Summary")
+    st.markdown("This chart shows total estimated revenue loss or gain from key competitors over the period.")
     competitors = ["HSBC", "Lloyds", "NatWest", "Santander", "Monzo", "Revolut"]
     impacts = [-130000, -110000, -85000, -60000, -25000, 10000]
     df_comp = pd.DataFrame({"Competitor": competitors, "Impact (£)": impacts})
@@ -120,8 +120,7 @@ if uploaded_file:
 
     # === Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
-    st.markdown("Adjust segment × channel spend multipliers. 2.0 = double spend, 0 = no spend.")
-
+    st.markdown("Adjust segment × channel spend. 2.0 = double spend, 0.0 = no spend.")
     for scenario in scenario_names:
         with st.expander(f"{scenario} Adjustments"):
             col1, col2, col3, col4 = st.columns([3, 3, 2, 2])
@@ -144,7 +143,6 @@ if uploaded_file:
     # === Forecast Comparison
     st.markdown("### 📈 Forecasted Revenue by Scenario")
     forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1)
-
     def get_forecast(df, weeks):
         df = df.sort_values("Date")
         return df.groupby("Date")["SimulatedAttributedSales"].sum().head(weeks).sum() / 1e6
@@ -165,7 +163,7 @@ if uploaded_file:
 
     # === Causal Graph
     st.markdown("### 🧠 Causal Graph")
-    st.markdown("Causal relationships between drivers and performance outcomes.")
+    st.markdown("Causal relationships between drivers and revenue.")
     G = nx.DiGraph()
     G.add_weighted_edges_from([
         ("Promo", "Spend", 0.8),
@@ -177,8 +175,10 @@ if uploaded_file:
         ("Competitor Spend", "Revenue", -0.4),
         ("Search Trends", "Brand Equity", 0.5)
     ])
-    pos = nx.spring_layout(G, seed=42, k=3.5)
+    pos = nx.spring_layout(G, seed=42, k=2.2)
     fig7, ax7 = plt.subplots(figsize=(10, 6))
-    nx.draw(G, pos, ax=ax7, node_color='skyblue', node_size=2500, with_labels=True, font_size=10)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), font_size=10, ax=ax7)
+    nx.draw_networkx_nodes(G, pos, ax=ax7, node_color='skyblue', node_size=3000)
+    nx.draw_networkx_edges(G, pos, ax=ax7, arrows=True)
+    nx.draw_networkx_labels(G, pos, font_size=9, font_weight='bold')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), font_size=9)
     st.pyplot(fig7)
