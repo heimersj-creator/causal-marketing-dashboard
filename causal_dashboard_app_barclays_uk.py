@@ -54,41 +54,40 @@ if uploaded_file:
 
     scenario_dfs = {name: simulate(df_segment, scenario_changes.get(name, {})) for name in scenario_names}
 
-    st.subheader("📊 Weekly Revenue Performance")
+    st.markdown("### 📊 Weekly Revenue Performance")
     selected_df = scenario_dfs['Scenario 1']
     weekly_perf = selected_df[selected_df['Segment'].isin(selected_segments) &
                               selected_df['Channel'].isin(selected_channels)]
-    weekly_grouped = weekly_perf.groupby('Channel')['SimulatedAttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
+    revenue_by_channel = weekly_perf.groupby('Channel')['SimulatedAttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
     fig1, ax1 = plt.subplots(figsize=(10, 3))
-    sns.barplot(x='Channel', y='SimulatedAttributedSales', data=weekly_grouped, ax=ax1)
+    sns.barplot(x='Channel', y='SimulatedAttributedSales', data=revenue_by_channel, ax=ax1)
     ax1.set_title("Forecasted Revenue by Channel")
     ax1.set_ylabel("£ Revenue")
     ax1.set_xlabel("")
     st.pyplot(fig1)
 
-    st.subheader("📉 Drivers of Performance")
+    st.markdown("### 📉 Drivers of Performance")
+    st.markdown("This chart breaks down the overall change in revenue compared to base by driver.")
     base_sales = df_segment['AttributedSales'].sum()
     scenario_sales = selected_df['SimulatedAttributedSales'].sum()
     delta = scenario_sales - base_sales
     driver_data = pd.DataFrame({
         'Driver': ['Base', 'Campaign Uplift', 'Interest Rate Change', 'Competitor Promotions', 'Barclays Media Shift', 'Scenario Forecast'],
-        'Value': [base_sales, 8000, -5000, -7000, delta, scenario_sales]
+        'Value (£)': [base_sales, 8000, -5000, -7000, delta, scenario_sales]
     })
-    driver_data['Cumulative'] = driver_data['Value'].cumsum()
+    driver_data['Cumulative'] = driver_data['Value (£)'].cumsum()
     fig2, ax2 = plt.subplots(figsize=(10, 4))
-    sns.barplot(x='Driver', y='Value', data=driver_data, palette='coolwarm', ax=ax2)
+    sns.barplot(x='Driver', y='Value (£)', data=driver_data, palette='coolwarm', ax=ax2)
     ax2.set_title("Drivers of Performance - Barclays UK Context", fontsize=14)
-    ax2.set_ylabel("Value", fontsize=12)
+    ax2.set_ylabel("£ Impact", fontsize=12)
     ax2.set_xlabel("Driver", fontsize=12)
     ax2.set_xticklabels(ax2.get_xticklabels(), rotation=30, ha="right")
     for p in ax2.patches:
-        ax2.annotate(f"{p.get_height():,.0f}",
-                     (p.get_x() + p.get_width() / 2., p.get_height()),
+        ax2.annotate(f"{p.get_height():,.0f}", (p.get_x() + p.get_width() / 2., p.get_height()),
                      ha='center', va='bottom', fontsize=9)
     st.pyplot(fig2)
 
-    # Competitor impact summary chart
-    st.subheader("📋 Competitor Impact Summary")
+    st.markdown("### 📋 Competitor Impact Summary")
     competitors = ['HSBC', 'Lloyds', 'NatWest', 'Santander', 'Monzo', 'Revolut']
     impact_values = [-130000, -110000, -85000, -60000, -25000, 10000]
     competitor_summary = pd.DataFrame({'Competitor': competitors, 'Impact (£)': impact_values})
@@ -97,8 +96,7 @@ if uploaded_file:
     ax3a.set_title("Estimated Revenue Impact by UK Competitors")
     st.pyplot(fig3a)
 
-    # Competitor impact breakdown by driver
-    st.subheader("🔎 Competitor Impact Breakdown by Driver")
+    st.markdown("### 🔎 Competitor Impact Breakdown by Driver")
     selected_comp = st.selectbox("Select a Competitor", competitors)
     comp_drivers = pd.DataFrame({
         'Driver': ['Media Spend', 'Promo Intensity', 'Product Launch', 'Price Change'],
@@ -109,8 +107,7 @@ if uploaded_file:
     ax3b.set_title(f"{selected_comp} - Revenue Impact Drivers")
     st.pyplot(fig3b)
 
-    # Scenario forecast comparison across all scenarios
-    st.subheader("🔮 Scenario Forecast Comparison")
+    st.markdown("### 🔮 Scenario Forecast Comparison")
     comparison = pd.DataFrame({
         'Scenario': scenario_names,
         'Revenue (£)': [scenario_dfs[name]['SimulatedAttributedSales'].sum() for name in scenario_names]
@@ -125,14 +122,15 @@ if uploaded_file:
                      ha='center', va='bottom', fontsize=9)
     st.pyplot(fig4)
 
-    # Weekly forecast time series for each scenario
-    st.subheader("📆 Forward Weekly Forecasts (Next 12 Weeks)")
+    st.markdown("### 📆 Forward Weekly Forecasts")
+    st.markdown("Compare expected revenue performance over time for each scenario. Adjust the horizon using the selector.")
+    weeks = st.slider("Select Forecast Horizon (weeks)", 4, 24, 12, step=1)
     start_date = pd.to_datetime("today").normalize()
-    future_weeks = pd.date_range(start=start_date, periods=12, freq='W-MON')
+    future_weeks = pd.date_range(start=start_date, periods=weeks, freq='W-MON')
     forecast_ts = pd.DataFrame({'Week': future_weeks})
     for name in scenario_names:
         total = scenario_dfs[name]['SimulatedAttributedSales'].sum()
-        forecast_ts[name] = np.linspace(total * 0.2, total, num=12)
+        forecast_ts[name] = np.linspace(total * 0.2, total, num=weeks)
     fig5, ax5 = plt.subplots(figsize=(10, 4))
     for name in scenario_names:
         ax5.plot(forecast_ts['Week'], forecast_ts[name], label=name)
