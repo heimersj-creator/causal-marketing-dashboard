@@ -1,5 +1,4 @@
 # causal_dashboard_app_barclays_uk.py
-# Final version with all charts, dynamic forecasts, proper £ formatting, and fixed causal graph
 
 import streamlit as st
 import pandas as pd
@@ -40,9 +39,9 @@ if uploaded_file:
         df["SimulatedAttributedSales"] = df["Spend"] * df["CausalWeight"]
         return df
 
-    # === Filters ===
+    # === Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
-    st.markdown("Shows cumulative weekly revenue. Adjust filters below.")
+    st.markdown("Historic cumulative revenue by channel. Filter below.")
     selected_channels = st.multiselect("Select Channels", channels, default=channels)
     selected_segments = st.multiselect("Select Segments", segments, default=segments)
     selected_products = st.multiselect("Select Products", products, default=products)
@@ -56,30 +55,35 @@ if uploaded_file:
     ts = df_filtered.sort_values("Date").groupby("Date")["AttributedSales"].sum().cumsum().reset_index()
     compare_mode = st.radio("Compare to:", ['None', 'Forecast', 'Last Year'], key="rev_compare")
     fig1, ax1 = plt.subplots(figsize=(10, 4))
-    ax1.plot(ts["Date"], ts["AttributedSales"] / 1000, label="Actual")
+    ax1.plot(ts["Date"], ts["AttributedSales"] / 1e6, label="Actual")
     if compare_mode == "Forecast":
-        ax1.plot(ts["Date"], ts["AttributedSales"] * 1.05 / 1000, label="Forecast", linestyle='--')
+        ax1.plot(ts["Date"], ts["AttributedSales"] * 1.05 / 1e6, label="Forecast", linestyle='--')
     elif compare_mode == "Last Year":
-        ax1.plot(ts["Date"], ts["AttributedSales"] * 0.95 / 1000, label="Last Year", linestyle='--')
+        ax1.plot(ts["Date"], ts["AttributedSales"] * 0.95 / 1e6, label="Last Year", linestyle='--')
     ax1.set_title("Cumulative Revenue Over Time")
-    ax1.set_ylabel("£ Revenue (000s)")
+    ax1.set_ylabel("£ Revenue (millions)")
+    ax1.ticklabel_format(style='plain', axis='y')
+    ax1.tick_params(axis="x", rotation=30)
     ax1.legend()
     st.pyplot(fig1)
 
-    # === Total Revenue by Channel ===
+    # === Total Revenue by Channel
     st.markdown("### 📊 Total Revenue by Channel")
-    total_channel = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
+    st.markdown("Total revenue across all weeks by channel.")
+    agg = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
     fig2, ax2 = plt.subplots(figsize=(10, 4))
-    sns.barplot(data=total_channel, x="Channel", y="AttributedSales", ax=ax2)
+    sns.barplot(data=agg, x="Channel", y="AttributedSales", ax=ax2)
     ax2.set_ylabel("£ Revenue")
     ax2.set_title("Total Revenue by Channel")
+    ax2.ticklabel_format(style='plain', axis='y')
     st.pyplot(fig2)
 
-    # === Waterfall
+    # === Waterfall Chart
     st.markdown("### 📉 Revenue Drivers - Waterfall")
-    channel_contrib = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0)
-    macro = {"Interest Rate": -50000, "Competition": -60000, "Segment Shift": 80000}
-    waterfall = [("Baseline", 1_000_000)] + list(channel_contrib.items()) + list(macro.items())
+    st.markdown("Channel-by-channel and macro impact on revenue. All values in £ millions.")
+    channel_contrib = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0) / 1e6
+    macro = {"Interest Rate": -0.15, "Competition": -0.2, "Segment Shift": 0.25}
+    waterfall = [("Baseline", 1.0)] + list(channel_contrib.items()) + list(macro.items())
     total = sum(val for _, val in waterfall)
     waterfall.append(("Total", total))
     wf = pd.DataFrame(waterfall, columns=["Driver", "Value"])
@@ -87,8 +91,9 @@ if uploaded_file:
     sns.barplot(data=wf, x="Driver", y="Value", palette="coolwarm", ax=ax3)
     ax3.set_ylabel("£ Value (millions)")
     ax3.set_title("Revenue Waterfall by Driver")
+    ax3.ticklabel_format(style='plain', axis='y')
     for p in ax3.patches:
-        ax3.annotate(f"{p.get_height()/1e6:,.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
+        ax3.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig3)
 
     # === Competitor Summary
@@ -115,7 +120,8 @@ if uploaded_file:
 
     # === Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
-    st.markdown("Adjust segment × channel spend. 2.0 doubles spend; 0 suppresses it.")
+    st.markdown("Adjust segment × channel spend multipliers. 2.0 = double spend, 0 = no spend.")
+
     for scenario in scenario_names:
         with st.expander(f"{scenario} Adjustments"):
             col1, col2, col3, col4 = st.columns([3, 3, 2, 2])
@@ -133,31 +139,33 @@ if uploaded_file:
             if adjustment_state[scenario]:
                 st.dataframe(pd.DataFrame(adjustment_state[scenario], columns=["Segment", "Channel", "Multiplier"]))
 
-    # === Forecast Horizon and Output
-    st.markdown("### 📈 Forecasted Revenue by Scenario")
-    forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1)
     scenario_dfs = {name: simulate(df_segment.copy(), scenario_changes[name]) for name in scenario_names}
 
-    def get_forecast_sum(df, weeks):
-        df = df.sort_values("Date")
-        return df.groupby("Date")["SimulatedAttributedSales"].sum().head(weeks).sum() / 1000
+    # === Forecast Comparison
+    st.markdown("### 📈 Forecasted Revenue by Scenario")
+    forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1)
 
-    data = {
+    def get_forecast(df, weeks):
+        df = df.sort_values("Date")
+        return df.groupby("Date")["SimulatedAttributedSales"].sum().head(weeks).sum() / 1e6
+
+    totals = {
         "Scenario": scenario_names,
-        "Revenue (£000s)": [get_forecast_sum(df, forecast_weeks) for df in scenario_dfs.values()]
+        "Revenue (£m)": [get_forecast(df, forecast_weeks) for df in scenario_dfs.values()]
     }
-    baseline = df_segment.sort_values("Date").groupby("Date")["AttributedSales"].sum().head(forecast_weeks).sum() / 1000
-    df_total = pd.DataFrame(data)
+    baseline = df_segment.sort_values("Date").groupby("Date")["AttributedSales"].sum().head(forecast_weeks).sum() / 1e6
+    df_total = pd.DataFrame(totals)
     df_total.loc[len(df_total.index)] = ["Baseline", baseline]
     fig6, ax6 = plt.subplots(figsize=(10, 4))
-    sns.barplot(data=df_total, x="Scenario", y="Revenue (£000s)", ax=ax6)
+    sns.barplot(data=df_total, x="Scenario", y="Revenue (£m)", ax=ax6)
     ax6.set_title("Forecast vs Baseline")
     for p in ax6.patches:
-        ax6.annotate(f"{p.get_height():,.0f}", (p.get_x()+p.get_width()/2., p.get_height()), ha="center")
+        ax6.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig6)
 
     # === Causal Graph
     st.markdown("### 🧠 Causal Graph")
+    st.markdown("Causal relationships between drivers and performance outcomes.")
     G = nx.DiGraph()
     G.add_weighted_edges_from([
         ("Promo", "Spend", 0.8),
@@ -169,9 +177,8 @@ if uploaded_file:
         ("Competitor Spend", "Revenue", -0.4),
         ("Search Trends", "Brand Equity", 0.5)
     ])
-    pos = nx.spring_layout(G, seed=42, k=2.5)
+    pos = nx.spring_layout(G, seed=42, k=3.5)
     fig7, ax7 = plt.subplots(figsize=(10, 6))
     nx.draw(G, pos, ax=ax7, node_color='skyblue', node_size=2500, with_labels=True, font_size=10)
-    edge_labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10, ax=ax7)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), font_size=10, ax=ax7)
     st.pyplot(fig7)
