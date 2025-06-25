@@ -1,12 +1,11 @@
 # causal_dashboard_app_barclays_uk.py
-# Final version with fixed syntax, full chart integration, and clean scenario planner
+# Final version with fixed filters, product categories, updated revenue scaling, and clean causal graph
 
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import datetime
 import networkx as nx
 
 st.set_page_config(layout="wide")
@@ -17,157 +16,116 @@ st.title("📊 Barclays Consumer Banking - Marketing Optimization Dashboard")
 uploaded_file = st.file_uploader("Upload the Barclays causal simulator Excel file", type="xlsx")
 
 if uploaded_file:
-    df_segment = pd.read_excel(uploaded_file, sheet_name='Segment Attribution')
-    df_product = pd.read_excel(uploaded_file, sheet_name='Product Attribution')
-    df_weights = pd.read_excel(uploaded_file, sheet_name='Causal Weights')
-
-    # Add missing column fallback
-    if 'ProductCategory' not in df_segment.columns:
-        df_segment['ProductCategory'] = 'Unknown'
+    df_segment = pd.read_excel(uploaded_file, sheet_name="Segment Attribution")
+    df_product = pd.read_excel(uploaded_file, sheet_name="Product Attribution")
+    df_weights = pd.read_excel(uploaded_file, sheet_name="Causal Weights")
 
     channels = ["TV", "Paid Social", "Email", "Push", "Branch", "Display", "Search"]
-    df_segment['Channel'] = pd.Categorical(df_segment['Channel'], categories=channels, ordered=True)
-    segments = df_segment['Segment'].unique().tolist()
-    products = df_segment['ProductCategory'].unique().tolist()
-    scenario_names = ['Scenario 1', 'Scenario 2', 'Scenario 3']
+    segments = df_segment["Segment"].unique().tolist()
+    products = df_segment["ProductCategory"].unique().tolist()
+    scenario_names = ["Scenario 1", "Scenario 2", "Scenario 3"]
     scenario_changes = {name: {} for name in scenario_names}
     adjustment_state = {name: [] for name in scenario_names}
 
     def simulate(df, changes):
         df = df.copy()
         for (seg, chan), mult in changes.items():
-            df.loc[(df['Segment'] == seg) & (df['Channel'] == chan), 'Spend'] *= mult
-        df['SimulatedAttributedSales'] = df['Spend'] * df['CausalWeight']
-        df['ROI'] = df['SimulatedAttributedSales'] / df['Spend']
+            df.loc[(df["Segment"] == seg) & (df["Channel"] == chan), "Spend"] *= mult
+        df = df.merge(df_weights, on="Channel", how="left")
+        df["SimulatedAttributedSales"] = df["Spend"] * df["CausalWeight"]
         return df
 
     # --- Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
-    st.markdown("Shows cumulative weekly revenue over time. Filter by audience, product, and channel.")
-    df_segment['Date'] = pd.date_range(start='2024-01-01', periods=len(df_segment), freq='W')
-    selected_channels = st.multiselect("Select Channels", channels, default=channels, key="rev_ch")
-    selected_segments = st.multiselect("Select Segments", segments, default=segments, key="rev_seg")
-    selected_products = st.multiselect("Select Products", products, default=products, key="rev_prod")
+    st.markdown("Filter by channel, product and audience. Values shown are cumulative revenue in £000s.")
+    df_segment['Date'] = pd.to_datetime(df_segment['Date'])
+    selected_channels = st.multiselect("Select Channels", channels, default=channels)
+    selected_segments = st.multiselect("Select Segments", segments, default=segments)
+    selected_products = st.multiselect("Select Products", products, default=products)
 
     df_filtered = df_segment[
-        df_segment['Channel'].isin(selected_channels) &
-        df_segment['Segment'].isin(selected_segments) &
-        df_segment['ProductCategory'].isin(selected_products)
+        df_segment["Channel"].isin(selected_channels) &
+        df_segment["Segment"].isin(selected_segments) &
+        df_segment["ProductCategory"].isin(selected_products)
     ]
-    historic = df_filtered.groupby('Date')['AttributedSales'].sum().cumsum().reset_index()
-    compare_mode = st.radio("Compare to:", ['None', 'Forecast', 'Last Year'], key="rev_compare")
-    fig_rc, ax_rc = plt.subplots(figsize=(10, 4))
-    ax_rc.plot(historic['Date'], historic['AttributedSales'], label="Actual")
-    if compare_mode == 'Forecast':
-        ax_rc.plot(historic['Date'], historic['AttributedSales'] * 1.05, label="Forecast", linestyle='--')
-    elif compare_mode == 'Last Year':
-        ax_rc.plot(historic['Date'], historic['AttributedSales'] * 0.95, label="Last Year", linestyle='--')
-    ax_rc.set_title("Cumulative Revenue Over Time")
-    ax_rc.set_ylabel("£ Revenue")
-    ax_rc.tick_params(axis='x', rotation=30)
-    ax_rc.legend()
-    st.pyplot(fig_rc)
+    df_filtered = df_filtered.sort_values("Date")
+    ts = df_filtered.groupby("Date")["AttributedSales"].sum().cumsum().reset_index()
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(ts["Date"], ts["AttributedSales"] / 1000, label="Actual")
+    ax.set_title("Cumulative Revenue by Channel")
+    ax.set_ylabel("£ Revenue (000s)")
+    ax.tick_params(axis="x", rotation=30)
+    ax.legend()
+    st.pyplot(fig)
 
     # --- Total Revenue by Channel
     st.markdown("### 📊 Total Revenue by Channel")
-    st.markdown("Total revenue generated by each channel. Filter by audience and product.")
-    total_filter = df_segment[
-        df_segment['Segment'].isin(selected_segments) &
-        df_segment['ProductCategory'].isin(selected_products)
-    ]
-    channel_grouped = total_filter.groupby('Channel')['AttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
-    fig_bar, ax_bar = plt.subplots(figsize=(10, 4))
-    sns.barplot(x='Channel', y='AttributedSales', data=channel_grouped, ax=ax_bar)
-    ax_bar.set_title("Total Revenue by Channel")
-    ax_bar.set_ylabel("£ Revenue")
-    st.pyplot(fig_bar)
+    st.markdown("Breakdown of revenue by channel based on your selected audience and products.")
+    agg = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
+    sns.barplot(data=agg, x="Channel", y="AttributedSales", ax=ax2)
+    ax2.set_ylabel("£ Revenue")
+    ax2.set_title("Total Revenue by Channel")
+    st.pyplot(fig2)
 
-    # --- Revenue Waterfall
+    # --- Waterfall
     st.markdown("### 📉 Revenue Drivers - Waterfall")
-    st.markdown("Shows the additive impact of each driver including all marketing channels and macro factors.")
-    channel_contrib = df_segment.groupby('Channel')['AttributedSales'].sum().reindex(channels, fill_value=0)
-    macro_factors = {'Interest Rate': -5000, 'Competition': -4000, 'Segment Shift': 6000}
-    steps = [('Baseline', 100000)] + list(channel_contrib.items()) + list(macro_factors.items())
-    total = sum([v for _, v in steps])
-    steps.append(('Total', total))
-    waterfall_data = pd.DataFrame(steps, columns=['Driver', 'Value'])
-    fig_wf, ax_wf = plt.subplots(figsize=(12, 4))
-    sns.barplot(x='Driver', y='Value', data=waterfall_data, palette='coolwarm', ax=ax_wf)
-    ax_wf.set_title("Revenue Waterfall by Driver")
-    for p in ax_wf.patches:
-        ax_wf.annotate(f"{p.get_height():,.0f}", (p.get_x() + p.get_width()/2., p.get_height()), ha='center')
-    st.pyplot(fig_wf)
-
-    # --- Competitor Impact Summary
-    st.markdown("### 📋 Competitor Impact Summary")
-    st.markdown("Total estimated revenue impact by competitor.")
-    competitors = ['HSBC', 'Lloyds', 'NatWest', 'Santander', 'Monzo', 'Revolut']
-    impacts = [-130000, -110000, -85000, -60000, -25000, 10000]
-    competitor_df = pd.DataFrame({'Competitor': competitors, 'Impact (£)': impacts})
-    fig_comp, ax_comp = plt.subplots(figsize=(10, 3))
-    sns.barplot(x='Impact (£)', y='Competitor', data=competitor_df, palette='RdBu', ax=ax_comp)
-    ax_comp.set_title("Revenue Impact by Competitor")
-    st.pyplot(fig_comp)
-
-    # --- Competitor Impact Breakdown
-    st.markdown("### 🔎 Competitor Impact Breakdown")
-    st.markdown("Breakdown of the revenue impact drivers for each competitor.")
-    selected_comp = st.selectbox("Select Competitor", competitors)
-    comp_factors = pd.DataFrame({
-        'Driver': ['Media Spend', 'Promotions', 'Brand Buzz', 'Pricing'],
-        'Impact (£)': [-50000, -30000, -20000, -10000] if selected_comp != 'Revolut' else [5000, 3000, 2000, 1000]
-    })
-    fig_sub, ax_sub = plt.subplots(figsize=(10, 3))
-    sns.barplot(x='Impact (£)', y='Driver', data=comp_factors, palette='crest', ax=ax_sub)
-    ax_sub.set_title(f"{selected_comp} - Impact Drivers")
-    st.pyplot(fig_sub)
+    st.markdown("Includes channel-level impact plus macro factors. All values are in £000s.")
+    channel_totals = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0)
+    macro = {"Interest Rate": -2500, "Competition": -3000, "Segment Shift": 4000}
+    waterfall = [("Baseline", 100000)] + list(channel_totals.items()) + list(macro.items())
+    total = sum(val for _, val in waterfall)
+    waterfall.append(("Total", total))
+    wf = pd.DataFrame(waterfall, columns=["Driver", "Value"])
+    fig3, ax3 = plt.subplots(figsize=(12, 4))
+    sns.barplot(data=wf, x="Driver", y="Value", ax=ax3, palette="coolwarm")
+    for p in ax3.patches:
+        ax3.annotate(f"{p.get_height()/1000:.0f}", (p.get_x()+p.get_width()/2., p.get_height()), ha="center")
+    ax3.set_ylabel("£ Value")
+    ax3.set_title("Revenue Waterfall by Driver")
+    st.pyplot(fig3)
 
     # --- Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
-    st.markdown("Use the controls below to add specific adjustments to each scenario.")
+    st.markdown("Adjust spend by segment and channel. A multiplier of 2.0 means doubling spend.")
 
     for scenario in scenario_names:
-        with st.expander(f"{scenario} Adjustments", expanded=False):
+        with st.expander(f"{scenario} Adjustments"):
             col1, col2, col3, col4 = st.columns([3, 3, 2, 2])
             with col1:
-                selected_segment = st.selectbox(f"Select Segment ({scenario})", segments, key=f"{scenario}_seg")
+                selected_segment = st.selectbox(f"Segment ({scenario})", segments, key=f"{scenario}_seg")
             with col2:
-                selected_channel = st.selectbox(f"Select Channel ({scenario})", channels, key=f"{scenario}_chan")
+                selected_channel = st.selectbox(f"Channel ({scenario})", channels, key=f"{scenario}_chan")
             with col3:
-                multiplier = st.slider("Spend Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
+                multiplier = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
             with col4:
-                if st.button(f"Add Adjustment ({scenario})", key=f"{scenario}_add"):
+                if st.button("Add", key=f"{scenario}_add"):
                     scenario_changes[scenario][(selected_segment, selected_channel)] = multiplier
                     adjustment_state[scenario].append((selected_segment, selected_channel, multiplier))
 
             if adjustment_state[scenario]:
-                st.markdown("#### Active Adjustments")
-                adj_df = pd.DataFrame(adjustment_state[scenario], columns=["Segment", "Channel", "Multiplier"])
-                st.dataframe(adj_df, use_container_width=True)
+                st.dataframe(pd.DataFrame(adjustment_state[scenario], columns=["Segment", "Channel", "Multiplier"]))
 
-    # ✅ FIXED DICTIONARY SYNTAX
-    scenario_dfs = {
-        name: simulate(df_segment.copy(), scenario_changes[name])
-        for name in scenario_names
-    }
-
-    # --- Forecast Comparison
+    # Forecast section
     st.markdown("### 📈 Forecasted Revenue by Scenario")
     forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1, key="horizon_slider")
-    scenario_totals = pd.DataFrame({
-        'Scenario': scenario_names,
-        'Revenue (£)': [df['SimulatedAttributedSales'].sum() for df in scenario_dfs.values()]
+    scenario_dfs = {name: simulate(df_segment.copy(), scenario_changes[name]) for name in scenario_names}
+    totals = pd.DataFrame({
+        "Scenario": scenario_names,
+        "Revenue (£)": [df["SimulatedAttributedSales"].sum() / 1000 for df in scenario_dfs.values()]
     })
-    fig_scen, ax_scen = plt.subplots(figsize=(10, 4))
-    sns.barplot(x='Scenario', y='Revenue (£)', data=scenario_totals, ax=ax_scen)
-    ax_scen.set_title("Forecasted Revenue by Scenario")
-    for p in ax_scen.patches:
-        ax_scen.annotate(f"{p.get_height():,.0f}", (p.get_x() + p.get_width()/2., p.get_height()), ha='center')
-    st.pyplot(fig_scen)
+    baseline_rev = df_segment["AttributedSales"].sum() / 1000
+    totals.loc[len(totals.index)] = ["Baseline", baseline_rev]
+    fig4, ax4 = plt.subplots(figsize=(10, 4))
+    sns.barplot(data=totals, x="Scenario", y="Revenue (£)", ax=ax4)
+    ax4.set_title("Forecast Revenue vs Baseline")
+    for p in ax4.patches:
+        ax4.annotate(f"{p.get_height():,.0f}", (p.get_x()+p.get_width()/2., p.get_height()), ha="center")
+    st.pyplot(fig4)
 
     # --- Causal Graph
     st.markdown("### 🧠 Causal Graph")
-    st.markdown("This diagram visualises the structure of how variables like spend, segment, and demand drive revenue.")
+    st.markdown("Visual representation of how inputs connect to outcomes.")
     G = nx.DiGraph()
     G.add_weighted_edges_from([
         ("Promo", "Spend", 0.8),
@@ -179,8 +137,8 @@ if uploaded_file:
         ("Competitor Spend", "Revenue", -0.4),
         ("Search Trends", "Brand Equity", 0.5)
     ])
-    pos = nx.spring_layout(G, seed=42, k=1.5)
-    fig_graph, ax_graph = plt.subplots(figsize=(10, 6))
-    nx.draw_networkx(G, pos, ax=ax_graph, node_color='skyblue', node_size=2000, with_labels=True, font_size=10)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), ax=ax_graph)
-    st.pyplot(fig_graph)
+    pos = nx.spring_layout(G, seed=42, k=1.8)
+    fig5, ax5 = plt.subplots(figsize=(10, 6))
+    nx.draw_networkx(G, pos, ax=ax5, node_color='skyblue', node_size=2000, with_labels=True, font_size=10)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), ax=ax5)
+    st.pyplot(fig5)
