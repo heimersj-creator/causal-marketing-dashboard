@@ -1,5 +1,6 @@
 # causal_dashboard_app_barclays_uk.py
-# Streamlit app with enhanced layout, cleaner charts, restored competitor visuals, and a revenue waterfall
+# Final version with proper layout, independent scenario panels, restored competitor charts,
+# improved causal graph, cumulative and total revenue by channel, and a revenue waterfall
 
 import streamlit as st
 import pandas as pd
@@ -50,8 +51,8 @@ if uploaded_file:
 
     scenario_dfs = {name: simulate(df_segment.copy(), scenario_changes[name]) for name in scenario_names}
 
+    # Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
-    st.markdown("Historic cumulative revenue by channel with filters and comparison.")
     df_segment['Date'] = pd.date_range(start='2024-01-01', periods=len(df_segment), freq='W')
     filtered = df_segment[df_segment['Channel'].isin(channels)]
     historic = filtered.groupby('Date')['AttributedSales'].sum().cumsum().reset_index()
@@ -68,6 +69,7 @@ if uploaded_file:
     ax_rc.legend()
     st.pyplot(fig_rc)
 
+    # Total Revenue by Channel
     st.markdown("### 📊 Total Revenue by Channel")
     channel_grouped = df_segment.groupby('Channel')['AttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
     fig_bar, ax_bar = plt.subplots(figsize=(10, 4))
@@ -76,8 +78,8 @@ if uploaded_file:
     ax_bar.set_ylabel("£ Revenue")
     st.pyplot(fig_bar)
 
+    # Revenue Waterfall
     st.markdown("### 📉 Revenue Drivers - Waterfall")
-    st.markdown("Waterfall showing additive contribution of key drivers.")
     baseline = 100000
     uplift = 8000
     interest = -5000
@@ -95,6 +97,7 @@ if uploaded_file:
         ax_wf.annotate(f"{p.get_height():,.0f}", (p.get_x() + p.get_width()/2., p.get_height()), ha='center')
     st.pyplot(fig_wf)
 
+    # Competitor Impact Summary
     st.markdown("### 📋 Competitor Impact Summary")
     competitors = ['HSBC', 'Lloyds', 'NatWest', 'Santander', 'Monzo', 'Revolut']
     impacts = [-130000, -110000, -85000, -60000, -25000, 10000]
@@ -104,6 +107,7 @@ if uploaded_file:
     ax_comp.set_title("Revenue Impact by Competitor")
     st.pyplot(fig_comp)
 
+    # Competitor Impact Breakdown
     st.markdown("### 🔎 Competitor Impact Breakdown")
     selected_comp = st.selectbox("Select Competitor", competitors)
     comp_factors = pd.DataFrame({
@@ -115,6 +119,7 @@ if uploaded_file:
     ax_sub.set_title(f"{selected_comp} - Impact Drivers")
     st.pyplot(fig_sub)
 
+    # Causal Graph
     st.markdown("### 🧠 Causal Graph")
     st.markdown("Network graph illustrating weighted causal relationships in the model.")
     G = nx.DiGraph()
