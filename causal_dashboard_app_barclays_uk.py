@@ -42,8 +42,6 @@ if uploaded_file:
         df['ROI'] = df['SimulatedAttributedSales'] / df['Spend']
         return df
 
-    forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1, key="horizon")
-
     # Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
     st.markdown("Shows cumulative weekly revenue over time. Filter by audience, product, and channel.")
@@ -124,7 +122,9 @@ if uploaded_file:
     sns.barplot(x='Impact (£)', y='Driver', data=comp_factors, palette='crest', ax=ax_sub)
     ax_sub.set_title(f"{selected_comp} - Impact Drivers")
     st.pyplot(fig_sub)
-
+   
+    forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1, key="horizon")
+   
     # Scenario Planner + Forecast Comparison
     st.markdown("### 🔧 Scenario Planner")
     st.markdown("Adjust channel × segment combinations below. Forecast chart shows expected revenue by scenario.")
