@@ -11,9 +11,9 @@ import networkx as nx
 st.set_page_config(layout="wide")
 sns.set(style='whitegrid')
 
-st.title("📊 Barclays Consumer Banking - Marketing Optimization Dashboard")
+st.title("📊 Consumer Banking - Marketing Optimization Dashboard")
 
-uploaded_file = st.file_uploader("Upload the Barclays causal simulator Excel file", type="xlsx")
+uploaded_file = st.file_uploader("Upload the causal simulator Excel file", type="xlsx")
 
 if uploaded_file:
     df_segment = pd.read_excel(uploaded_file, sheet_name="Segment Attribution")
