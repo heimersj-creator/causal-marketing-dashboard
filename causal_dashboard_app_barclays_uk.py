@@ -1,5 +1,5 @@
 # causal_dashboard_app.py
-# Streamlit app with advanced causal marketing optimization layout (Barclays UK context)
+# Streamlit app with optimized layout for Barclays UK consumer bank
 
 import streamlit as st
 import pandas as pd
@@ -56,9 +56,10 @@ if uploaded_file:
     selected_df = scenario_dfs['Scenario 1']
     weekly_perf = selected_df[selected_df['Segment'].isin(selected_segments) &
                               selected_df['Channel'].isin(selected_channels)]
-    weekly_grouped = weekly_perf.groupby('Channel')['SimulatedAttributedSales'].sum().reset_index()
-    fig1, ax1 = plt.subplots()
-    sns.barplot(x='Channel', y='SimulatedAttributedSales', data=weekly_grouped, ax=ax1)
+    # Ensure all channels are represented
+    revenue_by_channel = weekly_perf.groupby('Channel')['SimulatedAttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
+    fig1, ax1 = plt.subplots(figsize=(10, 3))
+    sns.barplot(x='Channel', y='SimulatedAttributedSales', data=revenue_by_channel, ax=ax1)
     ax1.set_title("Forecasted Revenue by Channel")
     ax1.set_ylabel("£ Revenue")
     ax1.set_xlabel("")
@@ -73,35 +74,42 @@ if uploaded_file:
         'Value': [base_sales, 8000, -5000, -7000, delta, scenario_sales]
     })
     driver_data['Cumulative'] = driver_data['Value'].cumsum()
-    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
     sns.barplot(x='Driver', y='Value', data=driver_data, palette='coolwarm', ax=ax2)
     ax2.set_title("Drivers of Performance - Barclays UK Context", fontsize=14)
     ax2.set_ylabel("Value", fontsize=12)
     ax2.set_xlabel("Driver", fontsize=12)
     ax2.set_xticklabels(ax2.get_xticklabels(), rotation=30, ha="right")
-
-    # Add value annotations
     for p in ax2.patches:
         ax2.annotate(f"{p.get_height():,.0f}",
                      (p.get_x() + p.get_width() / 2., p.get_height()),
                      ha='center', va='bottom', fontsize=9)
-
     st.pyplot(fig2)
 
     st.subheader("📋 Competitor Impact Breakdown")
     competitors = ['HSBC', 'Lloyds', 'NatWest', 'Santander', 'Monzo', 'Revolut']
+    reasons = ['Media Spend', 'Promo Push', 'New Product', 'Rate Cut', 'Brand Buzz', 'Referral Bonus']
     competitor_effect = pd.DataFrame({
         'Competitor': competitors,
-        'Impact (£)': [-130000, -110000, -85000, -60000, -25000, 10000]
+        'Impact (£)': [-130000, -110000, -85000, -60000, -25000, 10000],
+        'Driver': reasons
     })
-    fig3, ax3 = plt.subplots()
-    sns.barplot(x='Impact (£)', y='Competitor', data=competitor_effect, palette='RdBu', ax=ax3)
-    ax3.set_title("Estimated Revenue Impact by UK Competitors")
+    fig3, ax3 = plt.subplots(figsize=(10, 3))
+    sns.barplot(x='Impact (£)', y='Competitor', hue='Driver', data=competitor_effect, ax=ax3)
+    ax3.set_title("Estimated Revenue Impact by UK Competitors & Cause")
     st.pyplot(fig3)
 
-    st.subheader("🔮 Scenario Forecast View")
-    forecast_fig, forecast_ax = plt.subplots()
-    forecast_ax.bar(['LY Sales', 'Forecast', 'Optimized'], [base_sales, base_sales + 15000, scenario_sales])
-    forecast_ax.set_title("Scenario Forecast vs Optimized Plan")
-    forecast_ax.set_ylabel("£ Sales")
-    st.pyplot(forecast_fig)
+    st.subheader("🔮 Scenario Forecast Comparison")
+    comparison = pd.DataFrame({
+        'Scenario': scenario_names,
+        'Revenue (£)': [scenario_dfs[name]['SimulatedAttributedSales'].sum() for name in scenario_names]
+    })
+    fig4, ax4 = plt.subplots(figsize=(10, 4))
+    sns.barplot(x='Scenario', y='Revenue (£)', data=comparison, palette='Blues', ax=ax4)
+    ax4.set_title("Forecasted Revenue by Scenario")
+    ax4.set_ylabel("£ Revenue")
+    for p in ax4.patches:
+        ax4.annotate(f"{p.get_height():,.0f}",
+                     (p.get_x() + p.get_width() / 2., p.get_height()),
+                     ha='center', va='bottom', fontsize=9)
+    st.pyplot(fig4)
