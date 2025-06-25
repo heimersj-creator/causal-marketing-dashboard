@@ -1,5 +1,5 @@
 # causal_dashboard_app_barclays_uk.py
-# Final version with scenario forecast chart, full filters, standardised channel labels, and per-chart descriptions
+# Fully updated version with fallback for ProductCategory, scenario planner, all charts and filters.
 
 import streamlit as st
 import pandas as pd
@@ -20,6 +20,10 @@ if uploaded_file:
     df_segment = pd.read_excel(uploaded_file, sheet_name='Segment Attribution')
     df_product = pd.read_excel(uploaded_file, sheet_name='Product Attribution')
     df_weights = pd.read_excel(uploaded_file, sheet_name='Causal Weights')
+
+    # ✅ Fallback fix: Add ProductCategory if missing
+    if 'ProductCategory' not in df_segment.columns:
+        df_segment['ProductCategory'] = 'Unknown'
 
     # Standardised channel names
     channels = ["TV", "Paid Social", "Email", "Push", "Branch", "Display", "Search"]
@@ -42,7 +46,7 @@ if uploaded_file:
 
     # Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
-    st.markdown("Shows cumulative weekly revenue over time. Use filters to break it down by audience, channel, and product.")
+    st.markdown("Shows cumulative weekly revenue over time. Filter by audience, product, and channel.")
     df_segment['Date'] = pd.date_range(start='2024-01-01', periods=len(df_segment), freq='W')
     selected_channels = st.multiselect("Select Channels", channels, default=channels, key="rev_ch")
     selected_segments = st.multiselect("Select Segments", segments, default=segments, key="rev_seg")
@@ -84,7 +88,7 @@ if uploaded_file:
     # Revenue Waterfall
     st.markdown("### 📉 Revenue Drivers - Waterfall")
     st.markdown("Shows the additive impact of each driver including marketing channels and macro factors.")
-    channel_contrib = df_segment.groupby('Channel')['AttributedSales'].sum()
+    channel_contrib = df_segment.groupby('Channel')['AttributedSales'].sum().reindex(channels, fill_value=0)
     macro_factors = {'Interest Rate': -5000, 'Competition': -4000, 'Segment Shift': 6000}
     steps = [('Baseline', 100000)] + list(channel_contrib.items()) + list(macro_factors.items())
     total = sum([v for _, v in steps])
