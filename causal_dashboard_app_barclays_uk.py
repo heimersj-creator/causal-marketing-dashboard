@@ -1,10 +1,12 @@
 # causal_dashboard_app.py
-# Streamlit app with optimized layout for Barclays UK consumer bank
+# Streamlit app with enhanced competitor breakdown and scenario time series forecast
 
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
+import datetime
 
 st.set_page_config(layout="wide")
 sns.set(style='whitegrid')
@@ -56,10 +58,9 @@ if uploaded_file:
     selected_df = scenario_dfs['Scenario 1']
     weekly_perf = selected_df[selected_df['Segment'].isin(selected_segments) &
                               selected_df['Channel'].isin(selected_channels)]
-    # Ensure all channels are represented
-    revenue_by_channel = weekly_perf.groupby('Channel')['SimulatedAttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
+    weekly_grouped = weekly_perf.groupby('Channel')['SimulatedAttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
     fig1, ax1 = plt.subplots(figsize=(10, 3))
-    sns.barplot(x='Channel', y='SimulatedAttributedSales', data=revenue_by_channel, ax=ax1)
+    sns.barplot(x='Channel', y='SimulatedAttributedSales', data=weekly_grouped, ax=ax1)
     ax1.set_title("Forecasted Revenue by Channel")
     ax1.set_ylabel("£ Revenue")
     ax1.set_xlabel("")
@@ -86,19 +87,29 @@ if uploaded_file:
                      ha='center', va='bottom', fontsize=9)
     st.pyplot(fig2)
 
-    st.subheader("📋 Competitor Impact Breakdown")
+    # Competitor impact summary chart
+    st.subheader("📋 Competitor Impact Summary")
     competitors = ['HSBC', 'Lloyds', 'NatWest', 'Santander', 'Monzo', 'Revolut']
-    reasons = ['Media Spend', 'Promo Push', 'New Product', 'Rate Cut', 'Brand Buzz', 'Referral Bonus']
-    competitor_effect = pd.DataFrame({
-        'Competitor': competitors,
-        'Impact (£)': [-130000, -110000, -85000, -60000, -25000, 10000],
-        'Driver': reasons
-    })
-    fig3, ax3 = plt.subplots(figsize=(10, 3))
-    sns.barplot(x='Impact (£)', y='Competitor', hue='Driver', data=competitor_effect, ax=ax3)
-    ax3.set_title("Estimated Revenue Impact by UK Competitors & Cause")
-    st.pyplot(fig3)
+    impact_values = [-130000, -110000, -85000, -60000, -25000, 10000]
+    competitor_summary = pd.DataFrame({'Competitor': competitors, 'Impact (£)': impact_values})
+    fig3a, ax3a = plt.subplots(figsize=(10, 3))
+    sns.barplot(x='Impact (£)', y='Competitor', data=competitor_summary, palette='RdBu', ax=ax3a)
+    ax3a.set_title("Estimated Revenue Impact by UK Competitors")
+    st.pyplot(fig3a)
 
+    # Competitor impact breakdown by driver
+    st.subheader("🔎 Competitor Impact Breakdown by Driver")
+    selected_comp = st.selectbox("Select a Competitor", competitors)
+    comp_drivers = pd.DataFrame({
+        'Driver': ['Media Spend', 'Promo Intensity', 'Product Launch', 'Price Change'],
+        'Impact (£)': [-50000, -40000, -30000, -10000] if selected_comp != 'Revolut' else [5000, 3000, 2000, 0]
+    })
+    fig3b, ax3b = plt.subplots(figsize=(10, 3))
+    sns.barplot(x='Impact (£)', y='Driver', data=comp_drivers, palette='crest', ax=ax3b)
+    ax3b.set_title(f"{selected_comp} - Revenue Impact Drivers")
+    st.pyplot(fig3b)
+
+    # Scenario forecast comparison across all scenarios
     st.subheader("🔮 Scenario Forecast Comparison")
     comparison = pd.DataFrame({
         'Scenario': scenario_names,
@@ -113,3 +124,21 @@ if uploaded_file:
                      (p.get_x() + p.get_width() / 2., p.get_height()),
                      ha='center', va='bottom', fontsize=9)
     st.pyplot(fig4)
+
+    # Weekly forecast time series for each scenario
+    st.subheader("📆 Forward Weekly Forecasts (Next 12 Weeks)")
+    start_date = pd.to_datetime("today").normalize()
+    future_weeks = pd.date_range(start=start_date, periods=12, freq='W-MON')
+    forecast_ts = pd.DataFrame({'Week': future_weeks})
+    for name in scenario_names:
+        total = scenario_dfs[name]['SimulatedAttributedSales'].sum()
+        forecast_ts[name] = np.linspace(total * 0.2, total, num=12)
+    fig5, ax5 = plt.subplots(figsize=(10, 4))
+    for name in scenario_names:
+        ax5.plot(forecast_ts['Week'], forecast_ts[name], label=name)
+    ax5.set_title("Forward Weekly Forecast - Total Revenue by Scenario")
+    ax5.set_ylabel("£ Revenue")
+    ax5.set_xlabel("Week Starting")
+    ax5.legend()
+    ax5.tick_params(axis='x', rotation=30)
+    st.pyplot(fig5)
