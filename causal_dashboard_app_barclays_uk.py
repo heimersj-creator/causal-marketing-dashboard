@@ -1,6 +1,5 @@
 # causal_dashboard_app_barclays_uk.py
-# Final version with proper layout, independent scenario panels, restored competitor charts,
-# improved causal graph, cumulative and total revenue by channel, and a revenue waterfall
+# Updated: Filtered revenue charts, scenario planner relocated and visualised, waterfall now includes channels
 
 import streamlit as st
 import pandas as pd
@@ -38,24 +37,21 @@ if uploaded_file:
 
     forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1, key="horizon")
 
-    st.markdown("### 🔧 Scenario Planner")
-    st.markdown("Adjust channel × segment combinations in each scenario.")
-    col_scenarios = st.columns(len(scenario_names))
-    for idx, name in enumerate(scenario_names):
-        with col_scenarios[idx]:
-            st.markdown(f"**{name}**")
-            for seg in segments:
-                for ch in channels:
-                    mult = st.slider(f"{seg} × {ch}", 0.0, 2.0, 1.0, 0.1, key=f"{name}_{seg}_{ch}")
-                    scenario_changes[name][(seg, ch)] = mult
-
-    scenario_dfs = {name: simulate(df_segment.copy(), scenario_changes[name]) for name in scenario_names}
-
     # Revenue by Channel (Cumulative)
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
+    st.markdown("Historic cumulative revenue by channel over time. Filter by channel, audience, and product.")
     df_segment['Date'] = pd.date_range(start='2024-01-01', periods=len(df_segment), freq='W')
-    filtered = df_segment[df_segment['Channel'].isin(channels)]
-    historic = filtered.groupby('Date')['AttributedSales'].sum().cumsum().reset_index()
+    selected_channels = st.multiselect("Select Channels", channels, default=channels, key="rev_ch")
+    selected_segments = st.multiselect("Select Segments", segments, default=segments, key="rev_seg")
+    selected_products = st.multiselect("Select Products", products, default=products, key="rev_prod")
+
+    df_filtered = df_segment[
+        df_segment['Channel'].isin(selected_channels) &
+        df_segment['Segment'].isin(selected_segments) &
+        df_segment['ProductCategory'].isin(selected_products)
+    ]
+
+    historic = df_filtered.groupby('Date')['AttributedSales'].sum().cumsum().reset_index()
     compare_mode = st.radio("Compare to:", ['None', 'Forecast', 'Last Year'], key="rev_compare")
     fig_rc, ax_rc = plt.subplots(figsize=(10, 4))
     ax_rc.plot(historic['Date'], historic['AttributedSales'], label="Actual")
@@ -63,7 +59,7 @@ if uploaded_file:
         ax_rc.plot(historic['Date'], historic['AttributedSales'] * 1.05, label="Forecast", linestyle='--')
     elif compare_mode == 'Last Year':
         ax_rc.plot(historic['Date'], historic['AttributedSales'] * 0.95, label="Last Year", linestyle='--')
-    ax_rc.set_title("Revenue by Channel")
+    ax_rc.set_title("Cumulative Revenue Over Time")
     ax_rc.set_ylabel("£ Revenue")
     ax_rc.tick_params(axis='x', rotation=30)
     ax_rc.legend()
@@ -71,26 +67,28 @@ if uploaded_file:
 
     # Total Revenue by Channel
     st.markdown("### 📊 Total Revenue by Channel")
-    channel_grouped = df_segment.groupby('Channel')['AttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
+    st.markdown("Shows total revenue attributed to each channel. Filter by audience and product.")
+    total_filter = df_segment[
+        df_segment['Segment'].isin(selected_segments) &
+        df_segment['ProductCategory'].isin(selected_products)
+    ]
+    channel_grouped = total_filter.groupby('Channel')['AttributedSales'].sum().reindex(channels, fill_value=0).reset_index()
     fig_bar, ax_bar = plt.subplots(figsize=(10, 4))
     sns.barplot(x='Channel', y='AttributedSales', data=channel_grouped, ax=ax_bar)
     ax_bar.set_title("Total Revenue by Channel")
     ax_bar.set_ylabel("£ Revenue")
     st.pyplot(fig_bar)
 
-    # Revenue Waterfall
+    # Revenue Waterfall - include channels
     st.markdown("### 📉 Revenue Drivers - Waterfall")
-    baseline = 100000
-    uplift = 8000
-    interest = -5000
-    competition = -4000
-    segment = 6000
-    total = baseline + uplift + interest + competition + segment
-    waterfall_data = pd.DataFrame({
-        'Driver': ['Baseline', 'Uplift', 'Interest', 'Competition', 'Segment Shift', 'Total'],
-        'Value': [baseline, uplift, interest, competition, segment, total]
-    })
-    fig_wf, ax_wf = plt.subplots(figsize=(10, 4))
+    st.markdown("Shows the additive impact of each driver, including channel-level contributions.")
+    channel_contrib = df_segment.groupby('Channel')['AttributedSales'].sum()
+    other_factors = {'Interest Rate': -5000, 'Competition': -4000, 'Segment Shift': 6000}
+    steps = [('Baseline', 100000)] + list(channel_contrib.items()) + list(other_factors.items())
+    total = sum([v for _, v in steps])
+    steps.append(('Total', total))
+    waterfall_data = pd.DataFrame(steps, columns=['Driver', 'Value'])
+    fig_wf, ax_wf = plt.subplots(figsize=(12, 4))
     sns.barplot(x='Driver', y='Value', data=waterfall_data, palette='coolwarm', ax=ax_wf)
     ax_wf.set_title("Revenue Waterfall by Driver")
     for p in ax_wf.patches:
@@ -118,6 +116,21 @@ if uploaded_file:
     sns.barplot(x='Impact (£)', y='Driver', data=comp_factors, palette='crest', ax=ax_sub)
     ax_sub.set_title(f"{selected_comp} - Impact Drivers")
     st.pyplot(fig_sub)
+
+    # Forecast Horizon (after filters)
+    st.markdown("### 📅 Scenario Forecast Comparison")
+    st.markdown("Compares total forecasted revenue by scenario using current slider values below.")
+    scenario_dfs = {name: simulate(df_segment.copy(), scenario_changes[name]) for name in scenario_names}
+    scenario_totals = pd.DataFrame({
+        'Scenario': scenario_names,
+        'Revenue (£)': [df['SimulatedAttributedSales'].sum() for df in scenario_dfs.values()]
+    })
+    fig_scen, ax_scen = plt.subplots(figsize=(10, 4))
+    sns.barplot(x='Scenario', y='Revenue (£)', data=scenario_totals, ax=ax_scen)
+    ax_scen.set_title("Forecasted Revenue by Scenario")
+    for p in ax_scen.patches:
+        ax_scen.annotate(f"{p.get_height():,.0f}", (p.get_x() + p.get_width()/2., p.get_height()), ha='center')
+    st.pyplot(fig_scen)
 
     # Causal Graph
     st.markdown("### 🧠 Causal Graph")
