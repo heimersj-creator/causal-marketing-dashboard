@@ -1,4 +1,3 @@
-
 # causal_dashboard_app.py
 # Streamlit app with advanced causal marketing optimization layout (Barclays UK context)
 
@@ -74,9 +73,19 @@ if uploaded_file:
         'Value': [base_sales, 8000, -5000, -7000, delta, scenario_sales]
     })
     driver_data['Cumulative'] = driver_data['Value'].cumsum()
-    fig2, ax2 = plt.subplots()
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
     sns.barplot(x='Driver', y='Value', data=driver_data, palette='coolwarm', ax=ax2)
-    ax2.set_title("Drivers of Performance - Barclays UK Context")
+    ax2.set_title("Drivers of Performance - Barclays UK Context", fontsize=14)
+    ax2.set_ylabel("Value", fontsize=12)
+    ax2.set_xlabel("Driver", fontsize=12)
+    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=30, ha="right")
+
+    # Add value annotations
+    for p in ax2.patches:
+        ax2.annotate(f"{p.get_height():,.0f}",
+                     (p.get_x() + p.get_width() / 2., p.get_height()),
+                     ha='center', va='bottom', fontsize=9)
+
     st.pyplot(fig2)
 
     st.subheader("📋 Competitor Impact Breakdown")
