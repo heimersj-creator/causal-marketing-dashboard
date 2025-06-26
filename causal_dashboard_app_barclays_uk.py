@@ -50,19 +50,26 @@ if uploaded_file:
         df["SimulatedAttributedSales"] = df["Spend"] * df["CausalWeight"]
         return df
 
-    # Filter interface
-    st.sidebar.header("Filter the dashboard")
-    selected_channels = st.sidebar.multiselect("Channels", channels, default=channels)
-    selected_segments = st.sidebar.multiselect("Segments", segments, default=segments)
-    selected_products = st.sidebar.multiselect("Products", products, default=products)
-    selected_customers = st.sidebar.multiselect("Customer Type", customer_types, default=customer_types)
+	# Filter interface
+	st.markdown("### 🎛️ Filter the Dashboard")
 
-    df_filtered = df_segment[
-        df_segment["Channel"].isin(selected_channels) &
-        df_segment["Segment"].isin(selected_segments) &
-        df_segment["ProductCategory"].isin(selected_products) &
-        df_segment["CustomerType"].isin(selected_customers)
-    ]
+    fc1, fc2 = st.columns(2)
+
+	with fc1:
+		selected_channels = st.multiselect("Channels", channels, default=channels)
+		selected_products = st.multiselect("Products", products, default=products)
+
+	with fc2:
+		selected_segments = st.multiselect("Segments", segments, default=segments)
+		selected_customers = st.multiselect("Customer Type", customer_types, default=customer_types)
+
+	df_filtered = df_segment[
+		df_segment["Channel"].isin(selected_channels) &
+		df_segment["Segment"].isin(selected_segments) &
+		df_segment["ProductCategory"].isin(selected_products) &
+		df_segment["CustomerType"].isin(selected_customers)
+	]
+
     # Chart 1: Cumulative Revenue Over Time
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
     st.markdown("""
