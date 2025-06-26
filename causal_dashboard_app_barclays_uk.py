@@ -311,15 +311,15 @@ G.add_weighted_edges_from(edges)
 pos = nx.spring_layout(G, seed=42, k=2.8)
 
 	# Draw nodes with larger labels
-	fig10, ax10 = plt.subplots(figsize=(10, 7))
-	nx.draw_networkx_nodes(G, pos, ax=ax10, node_color='skyblue', node_size=5000)
-	nx.draw_networkx_edges(G, pos, ax=ax10, arrowstyle='-|>', arrowsize=18, edge_color='black', connectionstyle='arc3,rad=0.1')
-	nx.draw_networkx_labels(G, pos, ax=ax10, font_size=10, font_weight='bold', verticalalignment='center')
+fig10, ax10 = plt.subplots(figsize=(10, 7))
+nx.draw_networkx_nodes(G, pos, ax=ax10, node_color='skyblue', node_size=5000)
+nx.draw_networkx_edges(G, pos, ax=ax10, arrowstyle='-|>', arrowsize=18, edge_color='black', connectionstyle='arc3,rad=0.1')
+nx.draw_networkx_labels(G, pos, ax=ax10, font_size=10, font_weight='bold', verticalalignment='center')
 
 	# Draw weights clearly
-	edge_labels = {(u, v): f"{d:.1f}" for u, v, d in G.edges(data='weight')}
-	nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=9, label_pos=0.5)
+edge_labels = {(u, v): f"{d:.1f}" for u, v, d in G.edges(data='weight')}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=9, label_pos=0.5)
 
-	ax10.set_title("Causal Influence Network", fontsize=14)
-	ax10.axis('off')
-	st.pyplot(fig10)
+ax10.set_title("Causal Influence Network", fontsize=14)
+ax10.axis('off')
+st.pyplot(fig10)
