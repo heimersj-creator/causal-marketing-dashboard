@@ -262,7 +262,7 @@ scenario_dfs = {
         for name in scenario_names
     }
 
-    def get_forecast(df, weeks):
+def get_forecast(df, weeks):
         df = df.sort_values("Date")
         if "SimulatedAttributedSales" not in df.columns:
             df = df.merge(df_weights, on="Channel", how="left")
