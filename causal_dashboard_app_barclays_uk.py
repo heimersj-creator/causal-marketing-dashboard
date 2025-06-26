@@ -51,7 +51,7 @@ if uploaded_file:
         return df
 
 	# Filter interface
-	st.markdown("### 🎛️ Filter the Dashboard")
+		st.markdown("### 🎛️ Filter the Dashboard")
 
     fc1, fc2 = st.columns(2)
 
