@@ -53,7 +53,7 @@ if uploaded_file:
 	# Filter interface
 st.markdown("### 🎛️ Filter the Dashboard")
 
-    fc1, fc2 = st.columns(2)
+fc1, fc2 = st.columns(2)
 
 	with fc1:
 		selected_channels = st.multiselect("Channels", channels, default=channels)
