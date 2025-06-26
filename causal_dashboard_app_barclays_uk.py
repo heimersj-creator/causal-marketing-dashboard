@@ -173,16 +173,32 @@ for scenario in scenario_names:
         with c4:
             cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
         with c5:
-            mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")			
-	if cols[5].button("❌", key=f"{scenario}_del_{i}"):
-				st.session_state["scenario_changes"][scenario].pop(i)
-				st.experimental_rerun()
+            mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
+        with c6:
+            if st.button("Add", key=f"{scenario}_add"):
+                st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
+                st.experimental_rerun()
 
-		if st.button(f"🗑 Clear All ({scenario})"):
-				st.session_state["scenario_changes"][scenario] = []
-				st.experimental_rerun()
+        # Display and manage adjustments
+        if st.session_state["scenario_changes"][scenario]:
+            st.markdown("#### Current Adjustments")
+            df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
+                                  columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
 
+            for i, row in df_adj.iterrows():
+                cols = st.columns([3, 3, 3, 3, 1, 1])
+                cols[0].markdown(f"**{row['Segment']}**")
+                cols[1].markdown(f"{row['Channel']}")
+                cols[2].markdown(f"{row['Product']}")
+                cols[3].markdown(f"{row['Customer']}")
+                cols[4].markdown(f"x{row['Multiplier']:.1f}")
+                if cols[5].button("❌", key=f"{scenario}_del_{i}"):
+                    st.session_state["scenario_changes"][scenario].pop(i)
+                    st.experimental_rerun()
 
+            if st.button(f"🗑 Clear All ({scenario})"):
+                st.session_state["scenario_changes"][scenario] = []
+                st.experimental_rerun()
 
         # Table display with remove buttons
         if st.session_state["scenario_changes"][scenario]:
