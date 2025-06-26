@@ -153,8 +153,8 @@ sns.barplot(data=df_wf, x="Driver", y="Value", palette="coolwarm", ax=ax5)
 ax5.set_ylabel("£ Value (millions)")
 ax5.set_title("Revenue Waterfall by Driver")
 ax5.set_xticklabels(ax5.get_xticklabels(), rotation=45, ha="right")
-    for p in ax5.patches:
-        ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
+for p in ax5.patches:
+ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
 st.pyplot(fig5)
 
     # Chart 6: Competitor Impact Summary
