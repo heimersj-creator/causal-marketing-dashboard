@@ -276,7 +276,7 @@ scenario_results = pd.DataFrame({
 baseline = get_forecast(df_segment, forecast_weeks)
 scenario_results.loc[len(scenario_results)] = ["Baseline", baseline]
 
-    fig7, ax7 = plt.subplots(figsize=(10, 4))
+fig7, ax7 = plt.subplots(figsize=(10, 4))
     sns.barplot(data=scenario_results, x="Scenario", y="Revenue (£m)", ax=ax7)
     ax7.set_title("Forecast vs Baseline")
     for p in ax7.patches:
