@@ -94,11 +94,11 @@ st.markdown("""
     **Action**: Investigate performance drivers by week.
     """)
 weekly = df_filtered.groupby("Date")["AttributedSales"].sum().reset_index()
-    fig2, ax2 = plt.subplots(figsize=(10, 4))
-    ax2.plot(weekly["Date"], weekly["AttributedSales"] / 1e6)
-    ax2.set_title("Weekly Revenue")
-    ax2.set_ylabel("£ Revenue (millions)")
-    st.pyplot(fig2)
+fig2, ax2 = plt.subplots(figsize=(10, 4))
+ax2.plot(weekly["Date"], weekly["AttributedSales"] / 1e6)
+ax2.set_title("Weekly Revenue")
+ax2.set_ylabel("£ Revenue (millions)")
+st.pyplot(fig2)
 
     # Chart 3: Stacked Area – Cumulative Revenue by Channel
     st.markdown("### 📊 Cumulative Revenue by Channel (Stacked Area)")
