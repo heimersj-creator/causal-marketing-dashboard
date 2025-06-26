@@ -174,10 +174,11 @@ for scenario in scenario_names:
             cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
         with c5:
             mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
-        with c6:
+       	with c6:
             if st.button("Add", key=f"{scenario}_add"):
                 st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
-                st.experimental_rerun()
+                st.rerun()
+
 
         # Table display with remove buttons
         if st.session_state["scenario_changes"][scenario]:
@@ -191,13 +192,15 @@ for scenario in scenario_names:
                 cols[2].markdown(f"{row['Product']}")
                 cols[3].markdown(f"{row['Customer']}")
                 cols[4].markdown(f"x{row['Multiplier']:.1f}")
-                if cols[5].button("❌", key=f"{scenario}_del_{i}"):
+	
+				if cols[5].button("❌", key=f"{scenario}_del_{i}"):
                     st.session_state["scenario_changes"][scenario].pop(i)
-                    st.experimental_rerun()
+                    st.rerun()
 
             if st.button(f"🗑 Clear All ({scenario})"):
                 st.session_state["scenario_changes"][scenario] = []
-                st.experimental_rerun()
+                st.rerun()
+
 
    
    # Chart 7: Forecasted Revenue by Scenario
