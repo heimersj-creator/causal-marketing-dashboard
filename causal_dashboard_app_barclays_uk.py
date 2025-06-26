@@ -63,7 +63,7 @@ with fc2:
 		selected_segments = st.multiselect("Segments", segments, default=segments)
 		selected_customers = st.multiselect("Customer Type", customer_types, default=customer_types)
 
-	df_filtered = df_segment[
+df_filtered = df_segment[
 		df_segment["Channel"].isin(selected_channels) &
 		df_segment["Segment"].isin(selected_segments) &
 		df_segment["ProductCategory"].isin(selected_products) &
