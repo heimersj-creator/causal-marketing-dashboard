@@ -72,7 +72,7 @@ df_filtered = df_segment[
 
     # Chart 1: Cumulative Revenue Over Time
 st.markdown("### 📈 Revenue by Channel (Cumulative)")
- st.markdown("""
+st.markdown("""
     This chart shows total revenue accumulating week by week.  
     **Use case**: Understand revenue pacing.  
     **Interpretation**: A steady upward slope is expected. Flat lines may show underperformance.  
