@@ -248,8 +248,8 @@ for scenario in scenario_names:
                     st.rerun()
    
    # Chart 9: Forecasted Revenue by Scenario
-    st.markdown("### 📈 Forecasted Revenue by Scenario")
-    st.markdown("""
+st.markdown("### 📈 Forecasted Revenue by Scenario")
+st.markdown("""
     This chart compares revenue projections under each scenario.  
     **Use case**: Evaluate which combination delivers best return.  
     **Interpretation**: Taller bars = more effective strategy.  
@@ -284,8 +284,8 @@ for scenario in scenario_names:
     st.pyplot(fig7)
 
 	# Chart 10: Causal Graph – Marketing Influence Model
-	st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
-	st.markdown("""
+st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
+st.markdown("""
 	This network diagram visualizes causal relationships between marketing inputs and revenue.  
 	**Use case**: Explain which variables are driving impact and how they're connected.  
 	**Interpretation**: Arrows show direction; weights show strength.  
