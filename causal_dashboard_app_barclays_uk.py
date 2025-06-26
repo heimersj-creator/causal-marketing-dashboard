@@ -255,7 +255,7 @@ st.markdown("""
     **Interpretation**: Taller bars = more effective strategy.  
     **Action**: Choose a scenario for investment or test further.
     """)
-    forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1)
+forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1)
 
     scenario_dfs = {
         name: simulate(df_segment.copy(), st.session_state["scenario_changes"][name])
