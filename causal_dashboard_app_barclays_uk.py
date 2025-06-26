@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import networkx as nx
+import uuid
 
 st.set_page_config(layout="wide")
 sns.set(style='whitegrid')
@@ -150,8 +151,6 @@ if uploaded_file:
     for p in ax5.patches:
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig5)
-
-    import uuid  # Add this at the top of your file if not already included
 
     # Chart 6: Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
