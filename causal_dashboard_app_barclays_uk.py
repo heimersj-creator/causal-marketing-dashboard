@@ -51,19 +51,19 @@ if uploaded_file:
         return df
 
 	# Filter interface
-st.markdown("### 🎛️ Filter the Dashboard")
+	st.markdown("### 🎛️ Filter the Dashboard")
 
-fc1, fc2 = st.columns(2)
+    fc1, fc2 = st.columns(2)
 
-with fc1:
+	with fc1:
 		selected_channels = st.multiselect("Channels", channels, default=channels)
 		selected_products = st.multiselect("Products", products, default=products)
 
-with fc2:
+	with fc2:
 		selected_segments = st.multiselect("Segments", segments, default=segments)
 		selected_customers = st.multiselect("Customer Type", customer_types, default=customer_types)
 
-df_filtered = df_segment[
+	df_filtered = df_segment[
 		df_segment["Channel"].isin(selected_channels) &
 		df_segment["Segment"].isin(selected_segments) &
 		df_segment["ProductCategory"].isin(selected_products) &
@@ -71,7 +71,7 @@ df_filtered = df_segment[
 	]
 
     # Chart 1: Cumulative Revenue Over Time
-st.markdown("### 📈 Revenue by Channel (Cumulative)")
+    st.markdown("### 📈 Revenue by Channel (Cumulative)")
     st.markdown("""
     This chart shows total revenue accumulating week by week.  
     **Use case**: Understand revenue pacing.  
