@@ -152,6 +152,41 @@ if uploaded_file:
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig5)
 
+    # Chart 8: Competitor Impact Summary
+    st.markdown("### 📋 Competitor Impact Summary")
+    st.markdown("""
+    Estimate of total revenue loss or gain attributed to competitors.  
+    **Use case**: Identify where Barclays is losing vs. market.  
+    **Interpretation**: Negative = revenue loss to competitor; positive = gain.  
+    **Action**: Investigate where competitors are pulling ahead.
+    """)
+    competitors = ["HSBC", "Lloyds", "NatWest", "Santander", "Monzo", "Revolut"]
+    competitor_impact = [-130_000, -110_000, -85_000, -60_000, -25_000, 10_000]
+    df_comp = pd.DataFrame({"Competitor": competitors, "Impact (£)": competitor_impact})
+    fig8, ax8 = plt.subplots(figsize=(10, 3))
+    sns.barplot(data=df_comp, x="Impact (£)", y="Competitor", palette="RdBu", ax=ax8)
+    ax8.set_title("Revenue Impact by Competitor")
+    st.pyplot(fig8)
+
+    # Chart 9: Competitor Breakdown
+    st.markdown("### 🔍 Competitor Impact Breakdown")
+    st.markdown("""
+    Breakdown of selected competitor's influence on revenue.  
+    **Use case**: Diagnose strengths/strategies of one competitor.  
+    **Interpretation**: Media Spend or Promotions may be leading factors.  
+    **Action**: Develop counter-moves or defend share accordingly.
+    """)
+    selected_comp = st.selectbox("Select Competitor", competitors)
+    if selected_comp == "Revolut":
+        breakdown = [("Media Spend", 5_000), ("Promotions", 3_000), ("Brand Consideration", 2_000), ("Pricing", 1_000)]
+    else:
+        breakdown = [("Media Spend", -50_000), ("Promotions", -30_000), ("Brand Consideration", -20_000), ("Pricing", -10_000)]
+    df_break = pd.DataFrame(breakdown, columns=["Driver", "Impact (£)"])
+    fig9, ax9 = plt.subplots(figsize=(10, 3))
+    sns.barplot(data=df_break, x="Impact (£)", y="Driver", palette="crest", ax=ax9)
+    ax9.set_title(f"{selected_comp} – Impact Drivers")
+    st.pyplot(fig9)
+  
     # Chart 6: Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
     st.markdown("""
@@ -243,41 +278,7 @@ if uploaded_file:
         ax7.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width() / 2., p.get_height()), ha='center')
     st.pyplot(fig7)
 
-    # Chart 8: Competitor Impact Summary
-    st.markdown("### 📋 Competitor Impact Summary")
-    st.markdown("""
-    Estimate of total revenue loss or gain attributed to competitors.  
-    **Use case**: Identify where Barclays is losing vs. market.  
-    **Interpretation**: Negative = revenue loss to competitor; positive = gain.  
-    **Action**: Investigate where competitors are pulling ahead.
-    """)
-    competitors = ["HSBC", "Lloyds", "NatWest", "Santander", "Monzo", "Revolut"]
-    competitor_impact = [-130_000, -110_000, -85_000, -60_000, -25_000, 10_000]
-    df_comp = pd.DataFrame({"Competitor": competitors, "Impact (£)": competitor_impact})
-    fig8, ax8 = plt.subplots(figsize=(10, 3))
-    sns.barplot(data=df_comp, x="Impact (£)", y="Competitor", palette="RdBu", ax=ax8)
-    ax8.set_title("Revenue Impact by Competitor")
-    st.pyplot(fig8)
-
-    # Chart 9: Competitor Breakdown
-    st.markdown("### 🔍 Competitor Impact Breakdown")
-    st.markdown("""
-    Breakdown of selected competitor's influence on revenue.  
-    **Use case**: Diagnose strengths/strategies of one competitor.  
-    **Interpretation**: Media Spend or Promotions may be leading factors.  
-    **Action**: Develop counter-moves or defend share accordingly.
-    """)
-    selected_comp = st.selectbox("Select Competitor", competitors)
-    if selected_comp == "Revolut":
-        breakdown = [("Media Spend", 5_000), ("Promotions", 3_000), ("Brand Consideration", 2_000), ("Pricing", 1_000)]
-    else:
-        breakdown = [("Media Spend", -50_000), ("Promotions", -30_000), ("Brand Consideration", -20_000), ("Pricing", -10_000)]
-    df_break = pd.DataFrame(breakdown, columns=["Driver", "Impact (£)"])
-    fig9, ax9 = plt.subplots(figsize=(10, 3))
-    sns.barplot(data=df_break, x="Impact (£)", y="Driver", palette="crest", ax=ax9)
-    ax9.set_title(f"{selected_comp} – Impact Drivers")
-    st.pyplot(fig9)
-   
+  
    # Chart 10: Causal Graph
     st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
     st.markdown("""
