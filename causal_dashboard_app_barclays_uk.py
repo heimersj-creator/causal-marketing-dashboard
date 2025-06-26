@@ -213,9 +213,9 @@ for scenario in scenario_names:
                 cols[3].markdown(f"{row['Customer']}")
                 cols[4].markdown(f"x{row['Multiplier']:.1f}")
 	
-				if cols[5].button("❌", key=f"{scenario}_del_{i}"):
-                    st.session_state["scenario_changes"][scenario].pop(i)
-                    st.rerun()
+	if cols[5].button("❌", key=f"{scenario}_del_{i}"):
+                st.session_state["scenario_changes"][scenario].pop(i)
+                st.rerun()
 
             if st.button(f"🗑 Clear All ({scenario})"):
                 st.session_state["scenario_changes"][scenario] = []
