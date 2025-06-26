@@ -174,7 +174,7 @@ for scenario in scenario_names:
             cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
         with c5:
             mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")			
-		if cols[5].button("❌", key=f"{scenario}_del_{i}"):
+	if cols[5].button("❌", key=f"{scenario}_del_{i}"):
 				st.session_state["scenario_changes"][scenario].pop(i)
 				st.experimental_rerun()
 
