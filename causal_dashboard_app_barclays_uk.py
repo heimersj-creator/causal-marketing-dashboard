@@ -185,7 +185,7 @@ selected_comp = st.selectbox("Select Competitor", competitors)
 if selected_comp == "Revolut":
 	breakdown = [("Media Spend", 5_000), ("Promotions", 3_000), ("Brand Consideration", 2_000), ("Pricing", 1_000)]
 else:
-breakdown = [("Media Spend", -50_000), ("Promotions", -30_000), ("Brand Consideration", -20_000), ("Pricing", -10_000)]
+	breakdown = [("Media Spend", -50_000), ("Promotions", -30_000), ("Brand Consideration", -20_000), ("Pricing", -10_000)]
 df_break = pd.DataFrame(breakdown, columns=["Driver", "Impact (£)"])
 fig9, ax9 = plt.subplots(figsize=(10, 3))
 sns.barplot(data=df_break, x="Impact (£)", y="Driver", palette="crest", ax=ax9)
