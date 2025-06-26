@@ -151,6 +151,8 @@ if uploaded_file:
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig5)
 
+    import uuid  # Add this at the top of your file if not already included
+
     # Chart 6: Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
     st.markdown("""
@@ -160,64 +162,51 @@ if uploaded_file:
     **Action**: Add multiple rows to test compounding effects. Use ❌ to remove individual rows or clear all.
     """)
 
-for scenario in scenario_names:
-    with st.expander(f"{scenario} Adjustments"):
-        # Selection interface
-        c1, c2, c3, c4, c5, c6 = st.columns(6)
-        with c1:
-            seg = st.selectbox(f"Segment ({scenario})", all_segments, key=f"{scenario}_seg")
-        with c2:
-            chan = st.selectbox(f"Channel ({scenario})", all_channels, key=f"{scenario}_chan")
-        with c3:
-            prod = st.selectbox(f"Product ({scenario})", all_products, key=f"{scenario}_prod")
-        with c4:
-            cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
-        with c5:
-            mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
-        with c6:
-            if st.button("Add", key=f"{scenario}_add"):
-                st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
-                st.rerun()
+    for scenario in scenario_names:
+        with st.expander(f"{scenario} Adjustments"):
+            c1, c2, c3, c4, c5, c6 = st.columns(6)
 
-        # Display and manage adjustments
-        if st.session_state["scenario_changes"][scenario]:
-            st.markdown("#### Current Adjustments")
-            df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
-                                  columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
-
-            for i, row in df_adj.iterrows():
-                cols = st.columns([3, 3, 3, 3, 1, 1])
-                cols[0].markdown(f"**{row['Segment']}**")
-                cols[1].markdown(f"{row['Channel']}")
-                cols[2].markdown(f"{row['Product']}")
-                cols[3].markdown(f"{row['Customer']}")
-                cols[4].markdown(f"x{row['Multiplier']:.1f}")
-                if cols[5].button("❌", key=f"{scenario}_del_{i}"):
-                    st.session_state["scenario_changes"][scenario].pop(i)
+            with c1:
+                seg = st.selectbox(f"Segment ({scenario})", all_segments, key=f"{scenario}_seg")
+            with c2:
+                chan = st.selectbox(f"Channel ({scenario})", all_channels, key=f"{scenario}_chan")
+            with c3:
+                prod = st.selectbox(f"Product ({scenario})", all_products, key=f"{scenario}_prod")
+            with c4:
+                cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
+            with c5:
+                mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
+            with c6:
+                if st.button("Add", key=f"{scenario}_add"):
+                    st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
                     st.rerun()
 
-            if st.button(f"🗑 Clear All ({scenario})"):
-                st.session_state["scenario_changes"][scenario] = []
-                st.rerun()
+            # Display table of current adjustments
+            if st.session_state["scenario_changes"][scenario]:
+                st.markdown("#### Current Adjustments")
+                df_adj = pd.DataFrame(
+                    st.session_state["scenario_changes"][scenario],
+                    columns=["Segment", "Channel", "Product", "Customer", "Multiplier"]
+                )
 
+                for i, row in df_adj.iterrows():
+                    cols = st.columns([3, 3, 3, 3, 1, 1])
+                    cols[0].markdown(f"**{row['Segment']}**")
+                    cols[1].markdown(f"{row['Channel']}")
+                    cols[2].markdown(f"{row['Product']}")
+                    cols[3].markdown(f"{row['Customer']}")
+                    cols[4].markdown(f"x{row['Multiplier']:.1f}")
 
-    st.markdown("#### Current Adjustments")
-    df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
-                          columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
-    for i, row in df_adj.iterrows():
-        cols = st.columns([3, 3, 3, 3, 1, 1])
-        cols[0].markdown(f"**{row['Segment']}**")
-        cols[1].markdown(f"{row['Channel']}")
-        cols[2].markdown(f"{row['Product']}")
-        cols[3].markdown(f"{row['Customer']}")
-        cols[4].markdown(f"x{row['Multiplier']:.1f}")
-        if cols[5].button("❌", key=f"{scenario}_del_{i}"):
-            st.session_state["scenario_changes"][scenario].pop(i)
-            st.rerun()
+                    # Generate unique delete key
+                    delete_key = f"{scenario}_del_{i}_{uuid.uuid4()}"
+                    if cols[5].button("❌", key=delete_key):
+                        st.session_state["scenario_changes"][scenario].pop(i)
+                        st.rerun()
 
-    if st.button(f"🗑 Clear All ({scenario})"):
-        st.session_state["scenario_changes"][scenario] = []
-        st.rerun()
+                # Clear All button
+                if st.button(f"🗑 Clear All ({scenario})", key=f"{scenario}_clear_all"):
+                    st.session_state["scenario_changes"][scenario] = []
+                    st.rerun()
    
    # Chart 7: Forecasted Revenue by Scenario
     st.markdown("### 📈 Forecasted Revenue by Scenario")
