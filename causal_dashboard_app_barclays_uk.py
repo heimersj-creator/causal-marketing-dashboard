@@ -124,38 +124,38 @@ st.markdown("""
     **Interpretation**: High bars = stronger contributors.  
     **Action**: Rebalance spend toward top channels.
     """)
-    total = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
-    fig4, ax4 = plt.subplots(figsize=(12, 5))
-    sns.barplot(data=total, x="Channel", y="AttributedSales", ax=ax4)
-    ax4.set_ylabel("£ Revenue (millions)")
-    ax4.set_title("Total Revenue by Channel")
-    ax4.set_yticklabels([f"{int(y/1e6)}m" for y in ax4.get_yticks()])
-    ax4.tick_params(axis="x", labelrotation=30, labelsize=9)
-    ax4.set_xticklabels(ax4.get_xticklabels(), ha="right")
-    st.pyplot(fig4)
+total = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
+fig4, ax4 = plt.subplots(figsize=(12, 5))
+sns.barplot(data=total, x="Channel", y="AttributedSales", ax=ax4)
+ax4.set_ylabel("£ Revenue (millions)")
+ax4.set_title("Total Revenue by Channel")
+ax4.set_yticklabels([f"{int(y/1e6)}m" for y in ax4.get_yticks()])
+ax4.tick_params(axis="x", labelrotation=30, labelsize=9)
+ax4.set_xticklabels(ax4.get_xticklabels(), ha="right")
+st.pyplot(fig4)
 
     # Chart 5: Waterfall Chart – Revenue Drivers
-    st.markdown("### 📉 Revenue Drivers – Waterfall")
-    st.markdown("""
+st.markdown("### 📉 Revenue Drivers – Waterfall")
+st.markdown("""
     This chart shows how each channel and macro factor contributes to revenue.  
     **Use case**: Attribute total revenue to key drivers.  
     **Interpretation**: Negative bars = drag; positive = uplift.  
     **Action**: Adjust strategy to improve low-impact drivers.
     """)
-    base = 1_000_000
-    channel_vals = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0)
-    macro = {"Interest Rate": -100_000, "Competition": -150_000, "Segment Shift": 120_000}
-    waterfall = [("Baseline", base)] + list(channel_vals.items()) + list(macro.items())
-    waterfall.append(("Total", base + sum(v for k, v in waterfall[1:])))
-    df_wf = pd.DataFrame(waterfall, columns=["Driver", "Value"])
-    fig5, ax5 = plt.subplots(figsize=(14, 5))
-    sns.barplot(data=df_wf, x="Driver", y="Value", palette="coolwarm", ax=ax5)
-    ax5.set_ylabel("£ Value (millions)")
-    ax5.set_title("Revenue Waterfall by Driver")
-    ax5.set_xticklabels(ax5.get_xticklabels(), rotation=45, ha="right")
+base = 1_000_000
+channel_vals = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0)
+macro = {"Interest Rate": -100_000, "Competition": -150_000, "Segment Shift": 120_000}
+waterfall = [("Baseline", base)] + list(channel_vals.items()) + list(macro.items())
+waterfall.append(("Total", base + sum(v for k, v in waterfall[1:])))
+df_wf = pd.DataFrame(waterfall, columns=["Driver", "Value"])
+fig5, ax5 = plt.subplots(figsize=(14, 5))
+sns.barplot(data=df_wf, x="Driver", y="Value", palette="coolwarm", ax=ax5)
+ax5.set_ylabel("£ Value (millions)")
+ax5.set_title("Revenue Waterfall by Driver")
+ax5.set_xticklabels(ax5.get_xticklabels(), rotation=45, ha="right")
     for p in ax5.patches:
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
-    st.pyplot(fig5)
+st.pyplot(fig5)
 
     # Chart 6: Competitor Impact Summary
     st.markdown("### 📋 Competitor Impact Summary")
