@@ -79,7 +79,7 @@ st.markdown("""
     **Action**: Drill into slow weeks and align with campaign cadence.
     """)
 cum = df_filtered.groupby("Date")["AttributedSales"].sum().cumsum().reset_index()
-    fig1, ax1 = plt.subplots(figsize=(10, 4))
+fig1, ax1 = plt.subplots(figsize=(10, 4))
     ax1.plot(cum["Date"], cum["AttributedSales"] / 1e6)
     ax1.set_title("Cumulative Revenue")
     ax1.set_ylabel("£ Revenue (millions)")
