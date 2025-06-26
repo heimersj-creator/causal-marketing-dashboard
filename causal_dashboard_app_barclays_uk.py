@@ -269,7 +269,7 @@ def get_forecast(df, weeks):
             df["SimulatedAttributedSales"] = df["Spend"] * df["CausalWeight"]
         return df.groupby("Date")["SimulatedAttributedSales"].sum().head(weeks).sum() / 1e6
 
-    scenario_results = pd.DataFrame({
+scenario_results = pd.DataFrame({
         "Scenario": scenario_names,
         "Revenue (£m)": [get_forecast(df, forecast_weeks) for df in scenario_dfs.values()]
     })
