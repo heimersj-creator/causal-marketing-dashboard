@@ -93,7 +93,7 @@ st.markdown("""
     **Interpretation**: Peaks often align with campaign activity or sponsorship.  
     **Action**: Investigate performance drivers by week.
     """)
-    weekly = df_filtered.groupby("Date")["AttributedSales"].sum().reset_index()
+weekly = df_filtered.groupby("Date")["AttributedSales"].sum().reset_index()
     fig2, ax2 = plt.subplots(figsize=(10, 4))
     ax2.plot(weekly["Date"], weekly["AttributedSales"] / 1e6)
     ax2.set_title("Weekly Revenue")
