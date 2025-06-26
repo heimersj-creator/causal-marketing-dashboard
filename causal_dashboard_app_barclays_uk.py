@@ -101,24 +101,24 @@ ax2.set_ylabel("£ Revenue (millions)")
 st.pyplot(fig2)
 
     # Chart 3: Stacked Area – Cumulative Revenue by Channel
-    st.markdown("### 📊 Cumulative Revenue by Channel (Stacked Area)")
-    st.markdown("""
+st.markdown("### 📊 Cumulative Revenue by Channel (Stacked Area)")
+st.markdown("""
     This chart shows how each channel contributes to revenue over time.  
     **Use case**: Evaluate mix and shifts in channel contribution.  
     **Interpretation**: Thicker areas = higher contribution.  
     **Action**: Adjust investment in underperforming or over-performing channels.
     """)
-    area = df_filtered.groupby(["Date", "Channel"])["AttributedSales"].sum().unstack().fillna(0).cumsum()
-    fig3, ax3 = plt.subplots(figsize=(12, 5))
-    ax3.stackplot(area.index, area.T / 1e6, labels=area.columns)
-    ax3.set_ylabel("£ Revenue (millions)")
-    ax3.set_title("Cumulative Revenue by Channel")
-    ax3.legend(loc="upper left")
-    st.pyplot(fig3)
+area = df_filtered.groupby(["Date", "Channel"])["AttributedSales"].sum().unstack().fillna(0).cumsum()
+fig3, ax3 = plt.subplots(figsize=(12, 5))
+ax3.stackplot(area.index, area.T / 1e6, labels=area.columns)
+ax3.set_ylabel("£ Revenue (millions)")
+ax3.set_title("Cumulative Revenue by Channel")
+ax3.legend(loc="upper left")
+st.pyplot(fig3)
     
     # Chart 4: Total Revenue by Channel
-    st.markdown("### 💰 Total Revenue by Channel")
-    st.markdown("""
+st.markdown("### 💰 Total Revenue by Channel")
+st.markdown("""
     Total revenue generated per channel across the full period.  
     **Use case**: Compare overall performance across media.  
     **Interpretation**: High bars = stronger contributors.  
