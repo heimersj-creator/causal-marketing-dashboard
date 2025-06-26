@@ -305,10 +305,10 @@ edges = [
 		("Search Trends", "Brand Equity", 0.5),
 		("Search Trends", "Demand", 0.6)
 	]
-	G.add_weighted_edges_from(edges)
+G.add_weighted_edges_from(edges)
 
 	# Improve layout and visibility
-	pos = nx.spring_layout(G, seed=42, k=2.8)
+pos = nx.spring_layout(G, seed=42, k=2.8)
 
 	# Draw nodes with larger labels
 	fig10, ax10 = plt.subplots(figsize=(10, 7))
