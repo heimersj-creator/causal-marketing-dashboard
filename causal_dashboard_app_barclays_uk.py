@@ -127,8 +127,6 @@ if uploaded_file:
     ax4.set_xticklabels(ax4.get_xticklabels(), ha="right")
     st.pyplot(fig4)
 
-
-
     # Chart 5: Waterfall Chart – Revenue Drivers
     st.markdown("### 📉 Revenue Drivers – Waterfall")
     st.markdown("""
@@ -152,7 +150,7 @@ if uploaded_file:
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig5)
 
-    # Chart 8: Competitor Impact Summary
+    # Chart 6: Competitor Impact Summary
     st.markdown("### 📋 Competitor Impact Summary")
     st.markdown("""
     Estimate of total revenue loss or gain attributed to competitors.  
@@ -168,7 +166,7 @@ if uploaded_file:
     ax8.set_title("Revenue Impact by Competitor")
     st.pyplot(fig8)
 
-    # Chart 9: Competitor Breakdown
+    # Chart 7: Competitor Breakdown
     st.markdown("### 🔍 Competitor Impact Breakdown")
     st.markdown("""
     Breakdown of selected competitor's influence on revenue.  
@@ -187,7 +185,7 @@ if uploaded_file:
     ax9.set_title(f"{selected_comp} – Impact Drivers")
     st.pyplot(fig9)
   
-    # Chart 6: Scenario Planner
+    # Chart 8: Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
     st.markdown("""
     Use this section to simulate changes to budget allocation.  
@@ -242,7 +240,7 @@ if uploaded_file:
                     st.session_state["scenario_changes"][scenario] = []
                     st.rerun()
    
-   # Chart 7: Forecasted Revenue by Scenario
+   # Chart 9: Forecasted Revenue by Scenario
     st.markdown("### 📈 Forecasted Revenue by Scenario")
     st.markdown("""
     This chart compares revenue projections under each scenario.  
