@@ -87,7 +87,7 @@ st.pyplot(fig1)
 
     # Chart 2: Revenue by Week (Not Cumulative)
 st.markdown("### 📉 Revenue by Week")
-    st.markdown("""
+st.markdown("""
     This view breaks down revenue each week individually.  
     **Use case**: Spot spikes or drops in weekly performance.  
     **Interpretation**: Peaks often align with campaign activity or sponsorship.  
