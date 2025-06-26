@@ -108,23 +108,24 @@ if uploaded_file:
     ax3.legend(loc="upper left")
     st.pyplot(fig3)
     
-# Chart 4: Total Revenue by Channel
-st.markdown("### 💰 Total Revenue by Channel")
-st.markdown("""
-Total revenue generated per channel across the full period.  
-**Use case**: Compare overall performance across media.  
-**Interpretation**: High bars = stronger contributors.  
-**Action**: Rebalance spend toward top channels.
-""")
-total = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
-fig4, ax4 = plt.subplots(figsize=(12, 5))
-sns.barplot(data=total, x="Channel", y="AttributedSales", ax=ax4)
-ax4.set_ylabel("£ Revenue (millions)")
-ax4.set_title("Total Revenue by Channel")
-ax4.set_yticklabels([f"{int(y/1e6)}m" for y in ax4.get_yticks()])
-ax4.tick_params(axis="x", labelrotation=30, labelsize=9)
-ax4.set_xticklabels(ax4.get_xticklabels(), ha="right")
-st.pyplot(fig4)
+    # Chart 4: Total Revenue by Channel
+    st.markdown("### 💰 Total Revenue by Channel")
+    st.markdown("""
+    Total revenue generated per channel across the full period.  
+    **Use case**: Compare overall performance across media.  
+    **Interpretation**: High bars = stronger contributors.  
+    **Action**: Rebalance spend toward top channels.
+    """)
+    total = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
+    fig4, ax4 = plt.subplots(figsize=(12, 5))
+    sns.barplot(data=total, x="Channel", y="AttributedSales", ax=ax4)
+    ax4.set_ylabel("£ Revenue (millions)")
+    ax4.set_title("Total Revenue by Channel")
+    ax4.set_yticklabels([f"{int(y/1e6)}m" for y in ax4.get_yticks()])
+    ax4.tick_params(axis="x", labelrotation=30, labelsize=9)
+    ax4.set_xticklabels(ax4.get_xticklabels(), ha="right")
+    st.pyplot(fig4)
+
 
 
     # Chart 5: Waterfall Chart – Revenue Drivers
@@ -150,14 +151,14 @@ st.pyplot(fig4)
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig5)
 
- # Chart 6: Scenario Planner
-st.markdown("### 🔧 Scenario Planner")
-st.markdown("""
-Use this section to simulate changes to budget allocation.  
-**Use case**: Create what-if scenarios for spend shifts.  
-**Interpretation**: Each row defines a multiplier for a segment/channel/product/customer combo.  
-**Action**: Add multiple rows to test compounding effects. Use ❌ to remove individual rows or clear all.
-""")
+    # Chart 6: Scenario Planner
+    st.markdown("### 🔧 Scenario Planner")
+    st.markdown("""
+    Use this section to simulate changes to budget allocation.  
+    **Use case**: Create what-if scenarios for spend shifts.  
+    **Interpretation**: Each row defines a multiplier for a segment/channel/product/customer combo.  
+    **Action**: Add multiple rows to test compounding effects. Use ❌ to remove individual rows or clear all.
+    """)
 
 for scenario in scenario_names:
     with st.expander(f"{scenario} Adjustments"):
