@@ -173,11 +173,15 @@ for scenario in scenario_names:
         with c4:
             cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
         with c5:
-            mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
-       	with c6:
-            if st.button("Add", key=f"{scenario}_add"):
-                st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
-                st.rerun()
+            mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")			
+		if cols[5].button("❌", key=f"{scenario}_del_{i}"):
+				st.session_state["scenario_changes"][scenario].pop(i)
+				st.experimental_rerun()
+
+		if st.button(f"🗑 Clear All ({scenario})"):
+				st.session_state["scenario_changes"][scenario] = []
+				st.experimental_rerun()
+
 
 
         # Table display with remove buttons
