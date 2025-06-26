@@ -273,7 +273,7 @@ scenario_results = pd.DataFrame({
         "Scenario": scenario_names,
         "Revenue (£m)": [get_forecast(df, forecast_weeks) for df in scenario_dfs.values()]
     })
-    baseline = get_forecast(df_segment, forecast_weeks)
+baseline = get_forecast(df_segment, forecast_weeks)
     scenario_results.loc[len(scenario_results)] = ["Baseline", baseline]
 
     fig7, ax7 = plt.subplots(figsize=(10, 4))
