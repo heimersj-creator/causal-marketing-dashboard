@@ -277,11 +277,11 @@ baseline = get_forecast(df_segment, forecast_weeks)
 scenario_results.loc[len(scenario_results)] = ["Baseline", baseline]
 
 fig7, ax7 = plt.subplots(figsize=(10, 4))
-    sns.barplot(data=scenario_results, x="Scenario", y="Revenue (£m)", ax=ax7)
-    ax7.set_title("Forecast vs Baseline")
+sns.barplot(data=scenario_results, x="Scenario", y="Revenue (£m)", ax=ax7)
+ax7.set_title("Forecast vs Baseline")
     for p in ax7.patches:
         ax7.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width() / 2., p.get_height()), ha='center')
-    st.pyplot(fig7)
+st.pyplot(fig7)
 
 	# Chart 10: Causal Graph – Marketing Influence Model
 st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
