@@ -107,7 +107,8 @@ if uploaded_file:
     ax3.set_title("Cumulative Revenue by Channel")
     ax3.legend(loc="upper left")
     st.pyplot(fig3)
-    # Chart 4: Total Revenue by Channel
+    
+	# Chart 4: Total Revenue by Channel
     st.markdown("### 💰 Total Revenue by Channel")
     st.markdown("""
     Total revenue generated per channel across the full period.  
@@ -169,7 +170,8 @@ if uploaded_file:
                 df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
                                       columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
                 st.dataframe(df_adj)
-    # Chart 7: Forecasted Revenue by Scenario
+   
+   # Chart 7: Forecasted Revenue by Scenario
     st.markdown("### 📈 Forecasted Revenue by Scenario")
     st.markdown("""
     This chart compares revenue projections under each scenario.  
@@ -239,7 +241,8 @@ if uploaded_file:
     sns.barplot(data=df_break, x="Impact (£)", y="Driver", palette="crest", ax=ax9)
     ax9.set_title(f"{selected_comp} – Impact Drivers")
     st.pyplot(fig9)
-    # Chart 10: Causal Graph
+   
+   # Chart 10: Causal Graph
     st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
     st.markdown("""
     This network diagram visualizes causal relationships between marketing inputs and revenue.  
