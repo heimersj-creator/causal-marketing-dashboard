@@ -200,8 +200,7 @@ for scenario in scenario_names:
                 st.session_state["scenario_changes"][scenario] = []
                 st.rerun()
 
-      # Table display with remove buttons
-if st.session_state["scenario_changes"][scenario]:
+
     st.markdown("#### Current Adjustments")
     df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
                           columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
