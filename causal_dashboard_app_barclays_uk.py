@@ -283,30 +283,43 @@ if uploaded_file:
         ax7.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width() / 2., p.get_height()), ha='center')
     st.pyplot(fig7)
 
-  
-   # Chart 10: Causal Graph
-    st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
-    st.markdown("""
-    This network diagram visualizes causal relationships between marketing inputs and revenue.  
-    **Use case**: Explain which variables are driving impact and how they're connected.  
-    **Interpretation**: Arrows show direction; weights show strength.  
-    **Action**: Focus on the most influential drivers to optimize performance.
-    """)
-    G = nx.DiGraph()
-    G.add_weighted_edges_from([
-        ("Promo", "Spend", 0.8),
-        ("Interest Rate", "Demand", -0.5),
-        ("Demand", "Spend", 0.6),
-        ("Spend", "Revenue", 1.2),
-        ("Customer Segment", "Revenue", 0.9),
-        ("Brand Equity", "Revenue", 0.7),
-        ("Competitor Spend", "Revenue", -0.4),
-        ("Search Trends", "Brand Equity", 0.5)
-    ])
-    pos = nx.spring_layout(G, seed=42, k=2.2)
-    fig10, ax10 = plt.subplots(figsize=(10, 6))
-    nx.draw_networkx_nodes(G, pos, ax=ax10, node_color='skyblue', node_size=2800)
-    nx.draw_networkx_edges(G, pos, ax=ax10, arrows=True)
-    nx.draw_networkx_labels(G, pos, font_size=9, font_weight='bold')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), font_size=9)
-    st.pyplot(fig10)
+	# Chart 10: Causal Graph – Marketing Influence Model
+	st.markdown("### 🧠 Causal Graph – Marketing Influence Model")
+	st.markdown("""
+	This network diagram visualizes causal relationships between marketing inputs and revenue.  
+	**Use case**: Explain which variables are driving impact and how they're connected.  
+	**Interpretation**: Arrows show direction; weights show strength.  
+	**Action**: Focus on the most influential drivers to optimize performance.
+	""")
+
+	# Define graph
+	G = nx.DiGraph()
+	edges = [
+		("Promo", "Spend", 0.8),
+		("Interest Rate", "Demand", -0.5),
+		("Demand", "Spend", 0.6),
+		("Spend", "Revenue", 1.2),
+		("Customer Segment", "Revenue", 0.9),
+		("Brand Equity", "Revenue", 0.7),
+		("Competitor Spend", "Revenue", -0.4),
+		("Search Trends", "Brand Equity", 0.5),
+		("Search Trends", "Demand", 0.6)
+	]
+	G.add_weighted_edges_from(edges)
+
+	# Improve layout and visibility
+	pos = nx.spring_layout(G, seed=42, k=2.8)
+
+	# Draw nodes with larger labels
+	fig10, ax10 = plt.subplots(figsize=(10, 7))
+	nx.draw_networkx_nodes(G, pos, ax=ax10, node_color='skyblue', node_size=5000)
+	nx.draw_networkx_edges(G, pos, ax=ax10, arrowstyle='-|>', arrowsize=18, edge_color='black', connectionstyle='arc3,rad=0.1')
+	nx.draw_networkx_labels(G, pos, ax=ax10, font_size=10, font_weight='bold', verticalalignment='center')
+
+	# Draw weights clearly
+	edge_labels = {(u, v): f"{d:.1f}" for u, v, d in G.edges(data='weight')}
+	nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=9, label_pos=0.5)
+
+	ax10.set_title("Causal Influence Network", fontsize=14)
+	ax10.axis('off')
+	st.pyplot(fig10)
