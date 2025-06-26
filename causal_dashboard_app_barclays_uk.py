@@ -11,28 +11,31 @@ import networkx as nx
 st.set_page_config(layout="wide")
 sns.set(style='whitegrid')
 
-st.title("📊 Barclays Consumer Banking - Marketing Optimization Dashboard")
+st.title("📊 Barclays Consumer Banking – Marketing Optimization Dashboard")
 
-uploaded_file = st.file_uploader("Upload the Enriched Causal Simulator Excel file", type="xlsx")
+uploaded_file = st.file_uploader("Upload the enriched simulator Excel", type="xlsx")
 
 if uploaded_file:
     df_segment = pd.read_excel(uploaded_file, sheet_name="Segment Attribution")
     df_weights = pd.read_excel(uploaded_file, sheet_name="Causal Weights")
 
+    # Standard setup
     channels = sorted(df_segment["Channel"].unique().tolist())
     segments = sorted(df_segment["Segment"].unique().tolist())
     products = sorted(df_segment["ProductCategory"].unique().tolist())
     customer_types = sorted(df_segment["CustomerType"].unique().tolist())
-    scenario_names = ["Scenario 1", "Scenario 2", "Scenario 3"]
-    scenario_changes = {name: [] for name in scenario_names}
 
-    all_segments = ["All"] + segments
     all_channels = ["All"] + channels
+    all_segments = ["All"] + segments
     all_products = ["All"] + products
     all_customers = ["All"] + customer_types
 
+    scenario_names = ["Scenario 1", "Scenario 2", "Scenario 3"]
+    scenario_changes = {name: [] for name in scenario_names}
+
     df_segment["Date"] = pd.to_datetime(df_segment["Date"])
 
+    # Simulation logic
     def simulate(df, changes):
         df = df.copy()
         df = df.merge(df_weights, on="Channel", how="left")
@@ -46,20 +49,19 @@ if uploaded_file:
             df.loc[mask, "Spend"] *= mult
         df["SimulatedAttributedSales"] = df["Spend"] * df["CausalWeight"]
         return df
-
+    # Filtered view for base visuals
     st.markdown("### 📈 Revenue by Channel (Cumulative)")
     st.markdown("""
-    Cumulative revenue over time for selected filters.  
-    **Use case**: See how revenue is pacing weekly.  
-    **Interpretation**: Upward trajectory is expected; plateaus suggest performance gaps.  
-    **Action**: Dive into weeks with stagnation or unusual spikes.
+    This chart shows cumulative revenue over time by week.  
+    **Use case**: Detect pacing trends.  
+    **Interpretation**: Upward slope shows revenue momentum.  
+    **Action**: Investigate plateaus or dips in growth.
     """)
-
-    filters = st.columns(4)
-    with filters[0]: selected_channels = st.multiselect("Channels", channels, default=channels)
-    with filters[1]: selected_segments = st.multiselect("Segments", segments, default=segments)
-    with filters[2]: selected_products = st.multiselect("Products", products, default=products)
-    with filters[3]: selected_customers = st.multiselect("Customer Type", customer_types, default=customer_types)
+    f1, f2, f3, f4 = st.columns(4)
+    with f1: selected_channels = st.multiselect("Channels", channels, default=channels)
+    with f2: selected_segments = st.multiselect("Segments", segments, default=segments)
+    with f3: selected_products = st.multiselect("Products", products, default=products)
+    with f4: selected_customers = st.multiselect("Customer Type", customer_types, default=customer_types)
 
     df_filtered = df_segment[
         df_segment["Channel"].isin(selected_channels) &
@@ -67,35 +69,39 @@ if uploaded_file:
         df_segment["ProductCategory"].isin(selected_products) &
         df_segment["CustomerType"].isin(selected_customers)
     ]
-    ts = df_filtered.groupby("Date")["AttributedSales"].sum().cumsum().reset_index()
+
+    # Cumulative revenue
+    ts_cum = df_filtered.groupby("Date")["AttributedSales"].sum().cumsum().reset_index()
     fig1, ax1 = plt.subplots(figsize=(10, 4))
-    ax1.plot(ts["Date"], ts["AttributedSales"]/1e6, label="Cumulative Revenue")
-    ax1.set_ylabel("£ Revenue (millions)")
+    ax1.plot(ts_cum["Date"], ts_cum["AttributedSales"] / 1e6)
     ax1.set_title("Cumulative Revenue Over Time")
+    ax1.set_ylabel("£ Revenue (millions)")
     ax1.tick_params(axis='x', rotation=30)
     st.pyplot(fig1)
 
-    st.markdown("### 📈 Revenue by Week")
+    # Weekly revenue
+    st.markdown("### 📉 Revenue by Week")
     st.markdown("""
-    Weekly revenue trends.  
-    **Use case**: Identify cyclical effects, campaign impact timing.  
-    **Interpretation**: Peaks/dips may align with promo cycles or sponsorships.  
-    **Action**: Shift budget based on timing performance.
+    This chart shows weekly revenue without accumulation.  
+    **Use case**: Spot campaign spikes or seasonal drops.  
+    **Interpretation**: Peaks may indicate promotions or events.  
+    **Action**: Align high-performing weeks with campaign calendar.
     """)
-    ts_weekly = df_filtered.groupby("Date")["AttributedSales"].sum().reset_index()
+    ts_week = df_filtered.groupby("Date")["AttributedSales"].sum().reset_index()
     fig2, ax2 = plt.subplots(figsize=(10, 4))
-    ax2.plot(ts_weekly["Date"], ts_weekly["AttributedSales"]/1e6)
-    ax2.set_ylabel("£ Revenue (millions)")
+    ax2.plot(ts_week["Date"], ts_week["AttributedSales"] / 1e6)
     ax2.set_title("Weekly Revenue")
+    ax2.set_ylabel("£ Revenue (millions)")
     ax2.tick_params(axis='x', rotation=30)
     st.pyplot(fig2)
 
-    st.markdown("### 📊 Cumulative Revenue by Channel (Stacked Area)")
+    # Stacked area by channel
+    st.markdown("### 📊 Cumulative Revenue by Channel")
     st.markdown("""
-    Pacing of cumulative revenue by channel.  
-    **Use case**: See mix and evolution over time.  
-    **Interpretation**: Growing areas indicate expanding channel influence.  
-    **Action**: Rebalance investment toward channels growing slower than expected.
+    Cumulative revenue broken down by channel.  
+    **Use case**: Understand mix shift over time.  
+    **Interpretation**: Flattening areas = underperforming channels.  
+    **Action**: Rebalance based on contribution trends.
     """)
     area_data = df_filtered.groupby(["Date", "Channel"])["AttributedSales"].sum().unstack().fillna(0).cumsum()
     fig3, ax3 = plt.subplots(figsize=(12, 5))
@@ -106,44 +112,53 @@ if uploaded_file:
     ax3.legend(loc="upper left")
     st.pyplot(fig3)
 
+    # Scenario Planner
     st.markdown("### 🔧 Scenario Planner")
     st.markdown("""
-    Adjust media allocations by audience, channel, product and customer type.  
-    **Use case**: Simulate investment decisions.  
-    **Interpretation**: Rows define overrides applied in forecast scenarios.  
-    **Action**: Build strategies by compounding adjustments.
+    Modify budget by audience, channel, product, and customer type.  
+    **Use case**: Build custom strategy scenarios.  
+    **Interpretation**: Each row = one adjustment applied to simulation.  
+    **Action**: Add multiple rows to simulate complex shifts.
     """)
     for scenario in scenario_names:
         with st.expander(f"{scenario} Adjustments"):
-            col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 2, 1])
-            with col1: seg = st.selectbox(f"Segment ({scenario})", all_segments, key=f"{scenario}_seg")
-            with col2: chan = st.selectbox(f"Channel ({scenario})", all_channels, key=f"{scenario}_chan")
-            with col3: prod = st.selectbox(f"Product ({scenario})", all_products, key=f"{scenario}_prod")
-            with col4: cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
-            with col5: mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
-            with col6:
+            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            with c1: seg = st.selectbox(f"Segment ({scenario})", all_segments, key=f"{scenario}_seg")
+            with c2: chan = st.selectbox(f"Channel ({scenario})", all_channels, key=f"{scenario}_chan")
+            with c3: prod = st.selectbox(f"Product ({scenario})", all_products, key=f"{scenario}_prod")
+            with c4: cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
+            with c5: mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
+            with c6:
                 if st.button("Add", key=f"{scenario}_add"):
                     scenario_changes[scenario].append((seg, chan, prod, cust, mult))
             if scenario_changes[scenario]:
                 df_adj = pd.DataFrame(scenario_changes[scenario], columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
                 st.dataframe(df_adj)
-
+    # Forecasted Revenue
     st.markdown("### 📈 Forecasted Revenue by Scenario")
     st.markdown("""
-    Compare projected uplift by scenario.  
-    **Use case**: Evaluate plan impact.  
-    **Interpretation**: Scenarios vs baseline = expected revenue change.  
-    **Action**: Choose top-performing paths.
+    Projected revenue impact by strategy scenario.  
+    **Use case**: Evaluate which media changes offer biggest upside.  
+    **Interpretation**: Compare scenarios to baseline.  
+    **Action**: Use best scenario as media recommendation.
     """)
     forecast_weeks = st.slider("📆 Forecast Horizon (weeks)", 4, 52, 12, step=1)
     scenario_dfs = {name: simulate(df_segment.copy(), scenario_changes[name]) for name in scenario_names}
-    def forecast(df, weeks): return df.sort_values("Date").groupby("Date")["SimulatedAttributedSales"].sum().head(weeks).sum() / 1e6
+
+    def get_forecast(df, weeks):
+        if "SimulatedAttributedSales" not in df.columns:
+            df = df.merge(df_weights, on="Channel", how="left")
+            df["SimulatedAttributedSales"] = df["Spend"] * df["CausalWeight"]
+        df = df.sort_values("Date")
+        return df.groupby("Date")["SimulatedAttributedSales"].sum().head(weeks).sum() / 1e6
+
     df_total = pd.DataFrame({
         "Scenario": scenario_names,
-        "Revenue (£m)": [forecast(df, forecast_weeks) for df in scenario_dfs.values()]
+        "Revenue (£m)": [get_forecast(df, forecast_weeks) for df in scenario_dfs.values()]
     })
-    baseline = forecast(df_segment, forecast_weeks)
+    baseline = get_forecast(df_segment, forecast_weeks)
     df_total.loc[len(df_total.index)] = ["Baseline", baseline]
+
     fig4, ax4 = plt.subplots(figsize=(10, 4))
     sns.barplot(data=df_total, x="Scenario", y="Revenue (£m)", ax=ax4)
     ax4.set_title("Forecast vs Baseline")
@@ -151,12 +166,47 @@ if uploaded_file:
         ax4.annotate(f"{p.get_height():.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig4)
 
-    st.markdown("### 🧠 Causal Graph")
+    # Competitor Impact Summary
+    st.markdown("### 📋 Competitor Impact Summary")
     st.markdown("""
-    Visual structure of model logic.  
-    **Use case**: Understand cause-effect.  
-    **Interpretation**: Arrows = direction; weights = influence strength.  
-    **Action**: Prioritize nodes with strongest positive or negative weights.
+    Shows the estimated revenue impact of major UK banking competitors.  
+    **Use case**: Identify where competitor pressure is strongest.  
+    **Interpretation**: Negative = lost revenue to rival activity.  
+    **Action**: Allocate defense spend or investigate causes.
+    """)
+    competitors = ["HSBC", "Lloyds", "NatWest", "Santander", "Monzo", "Revolut"]
+    impacts = [-130000, -110000, -85000, -60000, -25000, 10000]
+    df_comp = pd.DataFrame({"Competitor": competitors, "Impact (£)": impacts})
+    fig5, ax5 = plt.subplots(figsize=(10, 3))
+    sns.barplot(data=df_comp, x="Impact (£)", y="Competitor", palette="RdBu", ax=ax5)
+    ax5.set_title("Revenue Impact by Competitor")
+    st.pyplot(fig5)
+
+    # Competitor Breakdown
+    st.markdown("### 🔍 Competitor Impact Breakdown")
+    st.markdown("""
+    View individual competitor's drivers of impact.  
+    **Use case**: Understand *why* a brand is winning or losing share.  
+    **Interpretation**: Channel/strategy-level breakdown.  
+    **Action**: Tailor messaging or counter strategies.
+    """)
+    selected_comp = st.selectbox("Select Competitor", competitors)
+    detail = pd.DataFrame({
+        "Driver": ["Media Spend", "Promotions", "Brand Consideration", "Pricing"],
+        "Impact (£)": [-50000, -30000, -20000, -10000] if selected_comp != "Revolut" else [5000, 3000, 2000, 1000]
+    })
+    fig6, ax6 = plt.subplots(figsize=(10, 3))
+    sns.barplot(data=detail, x="Impact (£)", y="Driver", palette="crest", ax=ax6)
+    ax6.set_title(f"{selected_comp} – Impact Drivers")
+    st.pyplot(fig6)
+
+    # Causal Graph
+    st.markdown("### 🧠 Causal Model Diagram")
+    st.markdown("""
+    This diagram visualizes how external and internal drivers affect outcomes.  
+    **Use case**: Explainability of uplift & attribution logic.  
+    **Interpretation**: Arrows indicate influence direction; weights show strength.  
+    **Action**: Focus strategy on strong causal levers.
     """)
     G = nx.DiGraph()
     G.add_weighted_edges_from([
@@ -166,7 +216,7 @@ if uploaded_file:
         ("Competitor Spend", "Revenue", -0.4), ("Search Trends", "Brand Equity", 0.5)
     ])
     pos = nx.spring_layout(G, seed=42, k=2.2)
-    fig5, ax5 = plt.subplots(figsize=(10, 6))
-    nx.draw(G, pos, with_labels=True, node_color="skyblue", node_size=2800, font_size=9, ax=ax5)
+    fig7, ax7 = plt.subplots(figsize=(10, 6))
+    nx.draw(G, pos, with_labels=True, node_color="skyblue", node_size=2800, font_size=9, ax=ax7)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), font_size=9)
-    st.pyplot(fig5)
+    st.pyplot(fig7)
