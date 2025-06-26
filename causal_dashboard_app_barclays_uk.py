@@ -293,8 +293,8 @@ st.markdown("""
 	""")
 
 	# Define graph
-	G = nx.DiGraph()
-	edges = [
+G = nx.DiGraph()
+edges = [
 		("Promo", "Spend", 0.8),
 		("Interest Rate", "Demand", -0.5),
 		("Demand", "Spend", 0.6),
