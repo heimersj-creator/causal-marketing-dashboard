@@ -177,7 +177,7 @@ for scenario in scenario_names:
         with c6:
             if st.button("Add", key=f"{scenario}_add"):
                 st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
-                st.experimental_rerun()
+                st.rerun()
 
         # Display and manage adjustments
         if st.session_state["scenario_changes"][scenario]:
@@ -194,11 +194,11 @@ for scenario in scenario_names:
                 cols[4].markdown(f"x{row['Multiplier']:.1f}")
                 if cols[5].button("❌", key=f"{scenario}_del_{i}"):
                     st.session_state["scenario_changes"][scenario].pop(i)
-                    st.experimental_rerun()
+                    st.rerun()
 
             if st.button(f"🗑 Clear All ({scenario})"):
                 st.session_state["scenario_changes"][scenario] = []
-                st.experimental_rerun()
+                st.rerun()
 
       # Table display with remove buttons
 if st.session_state["scenario_changes"][scenario]:
