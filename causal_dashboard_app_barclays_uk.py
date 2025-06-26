@@ -108,21 +108,24 @@ if uploaded_file:
     ax3.legend(loc="upper left")
     st.pyplot(fig3)
     
-	# Chart 4: Total Revenue by Channel
-    st.markdown("### 💰 Total Revenue by Channel")
-    st.markdown("""
-    Total revenue generated per channel across the full period.  
-    **Use case**: Compare overall performance across media.  
-    **Interpretation**: High bars = stronger contributors.  
-    **Action**: Rebalance spend toward top channels.
-    """)
-    total = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
-    fig4, ax4 = plt.subplots(figsize=(10, 4))
-    sns.barplot(data=total, x="Channel", y="AttributedSales", ax=ax4)
-    ax4.set_ylabel("£ Revenue (millions)")
-    ax4.set_title("Total Revenue by Channel")
-    ax4.set_yticklabels([f"{int(y/1e6)}m" for y in ax4.get_yticks()])
-    st.pyplot(fig4)
+# Chart 4: Total Revenue by Channel
+st.markdown("### 💰 Total Revenue by Channel")
+st.markdown("""
+Total revenue generated per channel across the full period.  
+**Use case**: Compare overall performance across media.  
+**Interpretation**: High bars = stronger contributors.  
+**Action**: Rebalance spend toward top channels.
+""")
+total = df_filtered.groupby("Channel")["AttributedSales"].sum().reindex(channels, fill_value=0).reset_index()
+fig4, ax4 = plt.subplots(figsize=(12, 5))
+sns.barplot(data=total, x="Channel", y="AttributedSales", ax=ax4)
+ax4.set_ylabel("£ Revenue (millions)")
+ax4.set_title("Total Revenue by Channel")
+ax4.set_yticklabels([f"{int(y/1e6)}m" for y in ax4.get_yticks()])
+ax4.tick_params(axis="x", labelrotation=30, labelsize=9)
+ax4.set_xticklabels(ax4.get_xticklabels(), ha="right")
+st.pyplot(fig4)
+
 
     # Chart 5: Waterfall Chart – Revenue Drivers
     st.markdown("### 📉 Revenue Drivers – Waterfall")
@@ -147,29 +150,54 @@ if uploaded_file:
         ax5.annotate(f"{p.get_height()/1e6:.1f}m", (p.get_x() + p.get_width()/2., p.get_height()), ha="center")
     st.pyplot(fig5)
 
-    # Chart 6: Scenario Planner
-    st.markdown("### 🔧 Scenario Planner")
-    st.markdown("""
-    Use this section to simulate changes to budget allocation.  
-    **Use case**: Create what-if scenarios for spend shifts.  
-    **Interpretation**: Each row defines a multiplier for a segment/channel/product/customer combo.  
-    **Action**: Add multiple rows to test compounding effects.
-    """)
-    for scenario in scenario_names:
-        with st.expander(f"{scenario} Adjustments"):
-            c1, c2, c3, c4, c5, c6 = st.columns(6)
-            with c1: seg = st.selectbox(f"Segment ({scenario})", all_segments, key=f"{scenario}_seg")
-            with c2: chan = st.selectbox(f"Channel ({scenario})", all_channels, key=f"{scenario}_chan")
-            with c3: prod = st.selectbox(f"Product ({scenario})", all_products, key=f"{scenario}_prod")
-            with c4: cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
-            with c5: mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
-            with c6:
-                if st.button("Add", key=f"{scenario}_add"):
-                    st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
-            if st.session_state["scenario_changes"][scenario]:
-                df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
-                                      columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
-                st.dataframe(df_adj)
+ # Chart 6: Scenario Planner
+st.markdown("### 🔧 Scenario Planner")
+st.markdown("""
+Use this section to simulate changes to budget allocation.  
+**Use case**: Create what-if scenarios for spend shifts.  
+**Interpretation**: Each row defines a multiplier for a segment/channel/product/customer combo.  
+**Action**: Add multiple rows to test compounding effects. Use ❌ to remove individual rows or clear all.
+""")
+
+for scenario in scenario_names:
+    with st.expander(f"{scenario} Adjustments"):
+        # Selection interface
+        c1, c2, c3, c4, c5, c6 = st.columns(6)
+        with c1:
+            seg = st.selectbox(f"Segment ({scenario})", all_segments, key=f"{scenario}_seg")
+        with c2:
+            chan = st.selectbox(f"Channel ({scenario})", all_channels, key=f"{scenario}_chan")
+        with c3:
+            prod = st.selectbox(f"Product ({scenario})", all_products, key=f"{scenario}_prod")
+        with c4:
+            cust = st.selectbox(f"Customer ({scenario})", all_customers, key=f"{scenario}_cust")
+        with c5:
+            mult = st.slider("Multiplier", 0.0, 2.0, 1.0, 0.1, key=f"{scenario}_mult")
+        with c6:
+            if st.button("Add", key=f"{scenario}_add"):
+                st.session_state["scenario_changes"][scenario].append((seg, chan, prod, cust, mult))
+                st.experimental_rerun()
+
+        # Table display with remove buttons
+        if st.session_state["scenario_changes"][scenario]:
+            st.markdown("#### Current Adjustments")
+            df_adj = pd.DataFrame(st.session_state["scenario_changes"][scenario],
+                                  columns=["Segment", "Channel", "Product", "Customer", "Multiplier"])
+            for i, row in df_adj.iterrows():
+                cols = st.columns([3, 3, 3, 3, 1, 1])
+                cols[0].markdown(f"**{row['Segment']}**")
+                cols[1].markdown(f"{row['Channel']}")
+                cols[2].markdown(f"{row['Product']}")
+                cols[3].markdown(f"{row['Customer']}")
+                cols[4].markdown(f"x{row['Multiplier']:.1f}")
+                if cols[5].button("❌", key=f"{scenario}_del_{i}"):
+                    st.session_state["scenario_changes"][scenario].pop(i)
+                    st.experimental_rerun()
+
+            if st.button(f"🗑 Clear All ({scenario})"):
+                st.session_state["scenario_changes"][scenario] = []
+                st.experimental_rerun()
+
    
    # Chart 7: Forecasted Revenue by Scenario
     st.markdown("### 📈 Forecasted Revenue by Scenario")
